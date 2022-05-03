@@ -5,9 +5,9 @@ localdb:
   volumes:
     - ./db/dumps:/app-db-dumps
   environment:
-    - POSTGRES_USER=pimsil
+    - POSTGRES_USER=pimsil_local
     - POSTGRES_PASSWORD=1234
-    - POSTGRES_DB=pimsil_db
+    - POSTGRES_DB=pimsil_db_local
 
 testdb:
   image: postgres:11.2
@@ -16,6 +16,6 @@ testdb:
   volumes:
     - ./db/dumps:/app-db-dumps
   environment:
-    - POSTGRES_USER=pimsil
+    - POSTGRES_USER=pimsil_test
     - POSTGRES_PASSWORD=1234
-    - POSTGRES_DB=pimsil_db
+    - POSTGRES_DB=pimsil_db_test
