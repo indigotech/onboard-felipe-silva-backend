@@ -1,5 +1,5 @@
 import { ApolloServer } from 'apollo-server';
-
+import 'reflect-metadata';
 import { schema } from './schema';
 
 export const server = new ApolloServer({
