@@ -21,6 +21,9 @@ const AppDataSource = new DataSource({
 AppDataSource.initialize()
   .then(async () => {
     console.log('Database Connection Successful');
+
+    console.log('You have these Users in your database:');
+    AppDataSource.manager.find(User).then(console.log);
   })
   .catch((error) => console.log(error));
 
