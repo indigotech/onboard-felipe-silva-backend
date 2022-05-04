@@ -1,4 +1,5 @@
 import { extendType, inputObjectType, objectType } from 'nexus';
+import { User } from '../entity/User';
 
 export const CreateUser = extendType({
   type: 'Mutation',
@@ -9,10 +10,22 @@ export const CreateUser = extendType({
         data: UserInput,
       },
 
-      resolve(parent, args, context) {
-        const { name, email, birthDate } = args.data;
+      resolve: async (parent, args, context) => {
+        const { name, email, birthDate, password } = args.data;
 
-        return { id: 0, name, email, birthDate };
+        const user = new User();
+        user.name = name;
+        user.email = email;
+        user.birthDate = birthDate;
+        user.password = password;
+
+        await context.typeorm.manager.save(user);
+
+        const users = await context.typeorm.manager.find(User);
+
+        const currentUser = users.find((item: User) => item.name === name);
+
+        return { id: currentUser.id, name, email, birthDate };
       },
     });
   },
