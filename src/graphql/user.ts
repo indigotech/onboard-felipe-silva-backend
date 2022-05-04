@@ -1,4 +1,4 @@
-import { extendType, inputObjectType, objectType } from 'nexus';
+import { extendType, inputObjectType, nonNull, objectType } from 'nexus';
 import { User } from '../entity/User';
 
 export const CreateUser = extendType({
@@ -7,10 +7,10 @@ export const CreateUser = extendType({
     t.nonNull.field('createUser', {
       type: CreateUserResponse,
       args: {
-        data: UserInput,
+        data: nonNull(UserInput),
       },
 
-      resolve: async (parent, args, context) => {
+      resolve: async (_parent, args, context) => {
         const { name, email, birthDate, password } = args.data;
 
         const user = new User();

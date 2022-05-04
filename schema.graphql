@@ -10,7 +10,7 @@ type CreateUserResponse {
 }
 
 type Mutation {
-  createUser(data: UserInput): CreateUserResponse!
+  createUser(data: UserInput!): CreateUserResponse!
 }
 
 type Query {

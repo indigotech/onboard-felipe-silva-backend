@@ -87,7 +87,7 @@ export interface NexusGenFieldTypeNames {
 export interface NexusGenArgTypes {
   Mutation: {
     createUser: { // args
-      data?: NexusGenInputs['UserInput'] | null; // UserInput
+      data: NexusGenInputs['UserInput']; // UserInput!
     }
   }
 }
