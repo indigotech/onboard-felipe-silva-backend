@@ -3,7 +3,6 @@ import 'reflect-metadata';
 import { ApolloServer } from 'apollo-server';
 import { schema } from './schema';
 import { AppDataSource } from './data-source';
-import { context } from './context';
 
 AppDataSource.initialize()
   .then(async () => {
@@ -16,7 +15,6 @@ AppDataSource.initialize()
 
 export const server = new ApolloServer({
   schema,
-  context,
 });
 
 const port = 3030;
