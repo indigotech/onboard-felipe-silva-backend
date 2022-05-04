@@ -19,13 +19,9 @@ export const CreateUser = extendType({
         user.birthDate = birthDate;
         user.password = password;
 
-        await context.typeorm.manager.save(user);
+        const { id } = await context.typeorm.manager.save(user);
 
-        const users = await context.typeorm.manager.find(User);
-
-        const currentUser = users.find((item: User) => item.name === name);
-
-        return { id: currentUser.id, name, email, birthDate };
+        return { id, name, email, birthDate };
       },
     });
   },
