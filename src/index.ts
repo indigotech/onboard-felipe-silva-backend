@@ -1,22 +1,9 @@
 import { User } from './entity/User';
-import { DataSource } from 'typeorm';
 import 'reflect-metadata';
 import { ApolloServer } from 'apollo-server';
 import { schema } from './schema';
-
-const AppDataSource = new DataSource({
-  type: 'postgres',
-  host: 'localhost',
-  port: 5432,
-  username: 'pimsil_local',
-  password: '1234',
-  database: 'pimsil_db_local',
-  synchronize: true,
-  logging: false,
-  entities: [User],
-  migrations: [],
-  subscribers: [],
-});
+import { AppDataSource } from './data-source';
+import { context } from './context';
 
 AppDataSource.initialize()
   .then(async () => {
@@ -29,6 +16,7 @@ AppDataSource.initialize()
 
 export const server = new ApolloServer({
   schema,
+  context,
 });
 
 const port = 3030;
