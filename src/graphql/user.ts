@@ -37,12 +37,12 @@ const handlePasswordValidation = (password: string) => {
   return regex.test(password);
 };
 
-const generateHash = (name: string, email: string, password: string): { salt: string; hashPassword: string } => {
+const generateHash = (name: string, email: string, password: string): { salt: string; hashedPassword: string } => {
   const salt = keccak256(name + email).toString('hex');
 
-  const hashPassword = keccak256(salt + password).toString('hex');
+  const hashedPassword = keccak256(salt + password).toString('hex');
 
-  return { salt, hashPassword };
+  return { salt, hashedPassword };
 };
 
 const handleCreateUserResolve: FieldResolver<'Mutation', 'createUser'> = async (_parent, args) => {
@@ -63,10 +63,13 @@ const handleCreateUserResolve: FieldResolver<'Mutation', 'createUser'> = async (
     throw new Error('This e-mail is already in use.');
   }
 
+  const { salt, hashedPassword } = generateHash(name, email, password);
+
   user.name = name;
   user.email = email;
   user.birthDate = birthDate;
-  user.password = password;
+  user.password = hashedPassword;
+  user.salt = salt;
 
   return AppDataSource.manager.save(user);
 };
