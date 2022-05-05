@@ -31,6 +31,12 @@ const resolveCreateUser: FieldResolver<'Mutation', 'createUser'> = async (_paren
   return AppDataSource.manager.save(user);
 };
 
+const handlePasswordValidation = (password: string) => {
+  const regex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{6,}$/; //REGEX: At least 6 characters, one letter and one digit
+
+  return regex.test(password);
+};
+
 export const CreateUser = extendType({
   type: 'Mutation',
   definition(t) {
