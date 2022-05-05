@@ -8,20 +8,24 @@ const server = new ApolloServer({
   schema,
 });
 
-server.listen({ port }).then(({ url }) => {
-  describe('Axios Call', () => {
-    it('Hello', async () => {
-      const data = await axios({
-        url,
-        method: 'post',
-        data: {
-          query: `query Query{hello}`,
-        },
-      }).then((result) => {
-        return result.status;
-      });
+describe('Axios Call', () => {
+  let connectedUrl: string;
+  before(async () => {
+    const { url } = await server.listen({ port });
+    connectedUrl = url;
+  });
 
-      assert.equal(data, 200);
+  it('Hello', async () => {
+    const data = await axios({
+      url: connectedUrl,
+      method: 'post',
+      data: {
+        query: `query Query{hello}`,
+      },
+    }).then((result) => {
+      return result.status;
     });
+
+    assert.equal(data, 200);
   });
 });
