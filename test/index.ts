@@ -1,29 +1,27 @@
 import axios from 'axios';
 import { ApolloServer } from 'apollo-server';
 import { schema } from '../src/schema';
-import assert = require('assert');
 const port = 3030;
+import { expect } from 'chai';
 
 const server = new ApolloServer({
   schema,
 });
 
-describe('Axios Call', () => {
-  let connectedUrl: string;
-  before(async () => {
-    const { url } = await server.listen({ port });
-    connectedUrl = url;
-  });
+server.listen({ port }).then(({ url }) => {
+  describe('Axios Call', () => {
+    it('Hello World!', async () => {
+      const queryValue = await axios({
+        url,
+        method: 'post',
+        data: {
+          query: `query Query{hello}`,
+        },
+      }).then((result) => {
+        return result.data.data.hello;
+      });
 
-  it('Hello', async () => {
-    const data = await axios({
-      url: connectedUrl,
-      method: 'post',
-      data: {
-        query: `query Query{hello}`,
-      },
-    }).then((result) => {
-      return result.status;
+      expect(queryValue).to.be.eq('Hello World!');
     });
 
     assert.equal(data, 200);
