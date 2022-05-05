@@ -3,10 +3,11 @@
 
 
 type CreateUserResponse {
-  birthDate: String!
-  email: String!
-  id: Int!
-  name: String!
+  birthDate: String
+  email: String
+  error: String
+  id: Int
+  name: String
 }
 
 type Mutation {

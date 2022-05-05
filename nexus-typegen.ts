@@ -35,10 +35,11 @@ export interface NexusGenScalars {
 
 export interface NexusGenObjects {
   CreateUserResponse: { // root type
-    birthDate: string; // String!
-    email: string; // String!
-    id: number; // Int!
-    name: string; // String!
+    birthDate?: string | null; // String
+    email?: string | null; // String
+    error?: string | null; // String
+    id?: number | null; // Int
+    name?: string | null; // String
   }
   Mutation: {};
   Query: {};
@@ -56,10 +57,11 @@ export type NexusGenAllTypes = NexusGenRootTypes & NexusGenScalars
 
 export interface NexusGenFieldTypes {
   CreateUserResponse: { // field return type
-    birthDate: string; // String!
-    email: string; // String!
-    id: number; // Int!
-    name: string; // String!
+    birthDate: string | null; // String
+    email: string | null; // String
+    error: string | null; // String
+    id: number | null; // Int
+    name: string | null; // String
   }
   Mutation: { // field return type
     createUser: NexusGenRootTypes['CreateUserResponse']; // CreateUserResponse!
@@ -73,6 +75,7 @@ export interface NexusGenFieldTypeNames {
   CreateUserResponse: { // field return type name
     birthDate: 'String'
     email: 'String'
+    error: 'String'
     id: 'Int'
     name: 'String'
   }
