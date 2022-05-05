@@ -20,7 +20,7 @@ export const CreateUser = extendType({
         user.birthDate = birthDate;
         user.password = password;
 
-        return await AppDataSource.manager.save(user);
+        return AppDataSource.manager.save(user);
       },
     });
   },
