@@ -1,6 +1,6 @@
 import { randomBytes, scrypt } from 'crypto';
 
-export const handlePasswordValidation = (password: string) => {
+export const isPasswordValid = (password: string) => {
   const regex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{6,}$/; //REGEX: At least 6 characters, one letter and one digit
 
   return regex.test(password);

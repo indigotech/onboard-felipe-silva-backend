@@ -1,13 +1,13 @@
 import { extendType, FieldResolver, inputObjectType, nonNull, objectType } from 'nexus';
 import { User } from '../entity/User';
 import { AppDataSource } from '../data-source';
-import { handlePasswordValidation, generateHash } from '../utils';
+import { isPasswordValid, generateHash } from '../utils';
 
 const resolveCreateUser: FieldResolver<'Mutation', 'createUser'> = async (_parent, args) => {
   const { name, email, birthDate, password } = args.data;
 
   const user = new User();
-  const isPasswordStrong: boolean = handlePasswordValidation(password);
+  const isPasswordStrong: boolean = isPasswordValid(password);
 
   if (!isPasswordStrong) {
     throw new Error('Weak password. It needs at least 6 characters, one letter and one digit!');
