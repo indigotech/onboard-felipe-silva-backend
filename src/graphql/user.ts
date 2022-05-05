@@ -37,6 +37,14 @@ const handlePasswordValidation = (password: string) => {
   return regex.test(password);
 };
 
+const generateHash = (name: string, email: string, password: string): { salt: string; hashPassword: string } => {
+  const salt = keccak256(name + email).toString('hex');
+
+  const hashPassword = keccak256(salt + password).toString('hex');
+
+  return { salt, hashPassword };
+};
+
 const handleCreateUserResolve: FieldResolver<'Mutation', 'createUser'> = async (_parent, args) => {
   const { name, email, birthDate, password } = args.data;
 
