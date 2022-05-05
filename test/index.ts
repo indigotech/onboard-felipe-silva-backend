@@ -23,7 +23,7 @@ const server = new ApolloServer({
       connectedUrl = url;
     });
 
-    it('Server Connected', () => expect(connectedUrl).to.be.eq('http://localhost:3030/'));
+    it('Server Connected to localhost:3030', () => expect(connectedUrl).to.be.eq('http://localhost:3030/'));
 
     let queryResult: string;
     before(async () => {
