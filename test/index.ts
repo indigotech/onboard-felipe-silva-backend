@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { ApolloServer } from 'apollo-server';
 import { schema } from '../src/schema';
-
+import assert = require('assert');
 const port = 3030;
 
 const server = new ApolloServer({
@@ -9,15 +9,19 @@ const server = new ApolloServer({
 });
 
 server.listen({ port }).then(({ url }) => {
-  console.log(`Server Started - URL: ${url}`);
+  describe('Axios Call', () => {
+    it('Hello', async () => {
+      const data = await axios({
+        url,
+        method: 'post',
+        data: {
+          query: `query Query{hello}`,
+        },
+      }).then((result) => {
+        return result.status;
+      });
 
-  axios({
-    url,
-    method: 'post',
-    data: {
-      query: `query Query{hello}`,
-    },
-  })
-    .then(console.log)
-    .catch(console.log);
+      assert.equal(data, 200);
+    });
+  });
 });
