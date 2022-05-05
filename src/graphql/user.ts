@@ -6,7 +6,7 @@ const resolveCreateUser: FieldResolver<'Mutation', 'createUser'> = async (_paren
   const { name, email, birthDate, password } = args.data;
 
   const user = new User();
-  const isPasswordStrong: boolean = isPasswordValid(password);
+  const isPasswordStrong: boolean = handlePasswordValidation(password);
 
   if (!isPasswordStrong) {
     throw new Error('Weak password. It needs at least 6 characters, one letter and one digit!');
@@ -25,12 +25,6 @@ const resolveCreateUser: FieldResolver<'Mutation', 'createUser'> = async (_paren
   user.password = password;
 
   return AppDataSource.manager.save(user);
-};
-
-const isPasswordValid = (password: string) => {
-  const regex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{6,}$/; //REGEX: At least 6 characters, one letter and one digit
-
-  return regex.test(password);
 };
 
 export const CreateUser = extendType({
