@@ -1,7 +1,7 @@
 import { extendType, FieldResolver, inputObjectType, nonNull, objectType } from 'nexus';
 import { User } from '../entity/User';
 import { AppDataSource } from '../data-source';
-import keccak256 = require('keccak256');
+import { handlePasswordValidation, generateHash } from '../utils';
 
 const resolveCreateUser: FieldResolver<'Mutation', 'createUser'> = async (_parent, args) => {
   const { name, email, birthDate, password } = args.data;
@@ -20,7 +20,7 @@ const resolveCreateUser: FieldResolver<'Mutation', 'createUser'> = async (_paren
     throw new Error('This e-mail is already in use.');
   }
 
-  const { salt, hashedPassword } = generateHash(name, email, password);
+  const { salt, hashedPassword } = await generateHash(password);
 
   user.name = name;
   user.email = email;
