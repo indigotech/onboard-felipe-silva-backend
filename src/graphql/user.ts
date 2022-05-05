@@ -1,6 +1,7 @@
 import { extendType, FieldResolver, inputObjectType, nonNull, objectType } from 'nexus';
 import { User } from '../entity/User';
 import { AppDataSource } from '../data-source';
+import { isPasswordValid, generateHash } from '../utils';
 
 const resolveCreateUser: FieldResolver<'Mutation', 'createUser'> = async (_parent, args) => {
   const { name, email, birthDate, password } = args.data;
@@ -19,18 +20,15 @@ const resolveCreateUser: FieldResolver<'Mutation', 'createUser'> = async (_paren
     throw new Error('This e-mail is already in use.');
   }
 
+  const { salt, hashedPassword } = generateHash(password);
+
   user.name = name;
   user.email = email;
   user.birthDate = birthDate;
-  user.password = password;
+  user.password = hashedPassword;
+  user.salt = salt;
 
   return AppDataSource.manager.save(user);
-};
-
-const isPasswordValid = (password: string) => {
-  const regex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{6,}$/; //REGEX: At least 6 characters, one letter and one digit
-
-  return regex.test(password);
 };
 
 export const CreateUser = extendType({
