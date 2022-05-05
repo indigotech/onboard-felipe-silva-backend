@@ -31,6 +31,38 @@ const resolveCreateUser: FieldResolver<'Mutation', 'createUser'> = async (_paren
   return AppDataSource.manager.save(user);
 };
 
+const handlePasswordValidation = (password: string) => {
+  const regex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{6,}$/; //REGEX: At least 6 characters, one letter and one digit
+
+  return regex.test(password);
+};
+
+const handleCreateUserResolve: FieldResolver<'Mutation', 'createUser'> = async (_parent, args) => {
+  const { name, email, birthDate, password } = args.data;
+
+  const user = new User();
+  const isPasswordStrong: boolean = handlePasswordValidation(password);
+
+  if (!isPasswordStrong) {
+    throw new Error('Weak password. It needs at least 6 characters, one letter and one digit!');
+  }
+
+  const databaseUsers = await AppDataSource.manager.find(User);
+
+  const thisUserAlreadyExists = databaseUsers.map((user) => user.email).indexOf(email) !== -1;
+
+  if (thisUserAlreadyExists) {
+    throw new Error('This e-mail is already in use.');
+  }
+
+  user.name = name;
+  user.email = email;
+  user.birthDate = birthDate;
+  user.password = password;
+
+  return AppDataSource.manager.save(user);
+};
+
 export const CreateUser = extendType({
   type: 'Mutation',
   definition(t) {
