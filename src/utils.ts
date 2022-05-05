@@ -1,4 +1,4 @@
-import { randomBytes, scrypt } from 'crypto';
+import { randomBytes, scrypt, scryptSync } from 'crypto';
 
 export const isPasswordValid = (password: string) => {
   const regex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{6,}$/; //REGEX: At least 6 characters, one letter and one digit
@@ -6,16 +6,10 @@ export const isPasswordValid = (password: string) => {
   return regex.test(password);
 };
 
-export const generateHash = async (password: string): Promise<{ salt: string; hashedPassword: string }> => {
-  return new Promise<{ salt: string; hashedPassword: string }>((resolve, reject) => {
-    const salt = randomBytes(16).toString('hex');
+export const generateHash = (password: string): { salt: string; hashedPassword: string } => {
+  const salt = randomBytes(16).toString('hex');
 
-    scrypt(password, salt, 64, (error, generatedHash) => {
-      if (error) {
-        reject(error);
-      }
+  const hashedPassword = scryptSync(password, salt, 64).toString('hex');
 
-      resolve({ salt, hashedPassword: generatedHash.toString('hex') });
-    });
-  });
+  return { salt, hashedPassword };
 };

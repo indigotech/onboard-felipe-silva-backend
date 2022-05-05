@@ -20,7 +20,7 @@ const resolveCreateUser: FieldResolver<'Mutation', 'createUser'> = async (_paren
     throw new Error('This e-mail is already in use.');
   }
 
-  const { salt, hashedPassword } = await generateHash(password);
+  const { salt, hashedPassword } = generateHash(password);
 
   user.name = name;
   user.email = email;
