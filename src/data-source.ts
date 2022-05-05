@@ -17,9 +17,6 @@ config({
   path: path.resolve(__dirname, `../${env_prefix}.env`),
 });
 
-console.log(process.env.POSTGRES_USER);
-console.log(`${__dirname}/${process.env.APP_ENV}.env`);
-
 export const AppDataSource = new DataSource({
   type: 'postgres',
   host: 'localhost',
