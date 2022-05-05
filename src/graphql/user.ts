@@ -1,6 +1,7 @@
 import { extendType, FieldResolver, inputObjectType, nonNull, objectType } from 'nexus';
 import { User } from '../entity/User';
 import { AppDataSource } from '../data-source';
+import keccak256 = require('keccak256');
 
 const resolveCreateUser: FieldResolver<'Mutation', 'createUser'> = async (_parent, args) => {
   const { name, email, birthDate, password } = args.data;

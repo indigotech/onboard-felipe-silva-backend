@@ -16,4 +16,7 @@ export class User {
 
   @Column()
   birthDate: string;
+
+  @Column()
+  salt: string;
 }
