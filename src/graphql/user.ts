@@ -37,43 +37,6 @@ const handlePasswordValidation = (password: string) => {
   return regex.test(password);
 };
 
-const generateHash = (name: string, email: string, password: string): { salt: string; hashedPassword: string } => {
-  const salt = keccak256(name + email).toString('hex');
-
-  const hashedPassword = keccak256(salt + password).toString('hex');
-
-  return { salt, hashedPassword };
-};
-
-const handleCreateUserResolve: FieldResolver<'Mutation', 'createUser'> = async (_parent, args) => {
-  const { name, email, birthDate, password } = args.data;
-
-  const user = new User();
-  const isPasswordStrong: boolean = handlePasswordValidation(password);
-
-  if (!isPasswordStrong) {
-    throw new Error('Weak password. It needs at least 6 characters, one letter and one digit!');
-  }
-
-  const databaseUsers = await AppDataSource.manager.find(User);
-
-  const thisUserAlreadyExists = databaseUsers.map((user) => user.email).indexOf(email) !== -1;
-
-  if (thisUserAlreadyExists) {
-    throw new Error('This e-mail is already in use.');
-  }
-
-  const { salt, hashedPassword } = generateHash(name, email, password);
-
-  user.name = name;
-  user.email = email;
-  user.birthDate = birthDate;
-  user.password = hashedPassword;
-  user.salt = salt;
-
-  return AppDataSource.manager.save(user);
-};
-
 export const CreateUser = extendType({
   type: 'Mutation',
   definition(t) {
