@@ -1,4 +1,6 @@
-import { extendType, inputObjectType, objectType } from 'nexus';
+import { extendType, inputObjectType, nonNull, objectType } from 'nexus';
+import { User } from '../entity/User';
+import { AppDataSource } from '../data-source';
 
 export const CreateUser = extendType({
   type: 'Mutation',
@@ -6,13 +8,19 @@ export const CreateUser = extendType({
     t.nonNull.field('createUser', {
       type: CreateUserResponse,
       args: {
-        data: UserInput,
+        data: nonNull(UserInput),
       },
 
-      resolve(parent, args, context) {
-        const { name, email, birthDate } = args.data;
+      resolve: async (_parent, args) => {
+        const { name, email, birthDate, password } = args.data;
 
-        return { id: 0, name, email, birthDate };
+        const user = new User();
+        user.name = name;
+        user.email = email;
+        user.birthDate = birthDate;
+        user.password = password;
+
+        return AppDataSource.manager.save(user);
       },
     });
   },
