@@ -1,6 +1,37 @@
-import { extendType, inputObjectType, nonNull, objectType } from 'nexus';
+import { extendType, FieldResolver, inputObjectType, nonNull, objectType } from 'nexus';
 import { User } from '../entity/User';
 import { AppDataSource } from '../data-source';
+
+const resolveCreateUser: FieldResolver<'Mutation', 'createUser'> = async (_parent, args) => {
+  const { name, email, birthDate, password } = args.data;
+
+  const user = new User();
+  const isPasswordStrong: boolean = isPasswordValid(password);
+
+  if (!isPasswordStrong) {
+    throw new Error('Weak password. It needs at least 6 characters, one letter and one digit!');
+  }
+
+  const existingUser = await AppDataSource.manager.findOneBy(User, { email });
+  const thisUserAlreadyExists = existingUser !== null;
+
+  if (thisUserAlreadyExists) {
+    throw new Error('This e-mail is already in use.');
+  }
+
+  user.name = name;
+  user.email = email;
+  user.birthDate = birthDate;
+  user.password = password;
+
+  return AppDataSource.manager.save(user);
+};
+
+const isPasswordValid = (password: string) => {
+  const regex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{6,}$/; //REGEX: At least 6 characters, one letter and one digit
+
+  return regex.test(password);
+};
 
 export const CreateUser = extendType({
   type: 'Mutation',
@@ -11,17 +42,7 @@ export const CreateUser = extendType({
         data: nonNull(UserInput),
       },
 
-      resolve: async (_parent, args) => {
-        const { name, email, birthDate, password } = args.data;
-
-        const user = new User();
-        user.name = name;
-        user.email = email;
-        user.birthDate = birthDate;
-        user.password = password;
-
-        return AppDataSource.manager.save(user);
-      },
+      resolve: resolveCreateUser,
     });
   },
 });
@@ -39,9 +60,10 @@ export const UserInput = inputObjectType({
 export const CreateUserResponse = objectType({
   name: 'CreateUserResponse',
   definition(t) {
-    t.nonNull.int('id');
-    t.nonNull.string('name');
-    t.nonNull.string('email');
-    t.nonNull.string('birthDate');
+    t.int('id');
+    t.string('name');
+    t.string('email');
+    t.string('birthDate');
+    t.string('error');
   },
 });
