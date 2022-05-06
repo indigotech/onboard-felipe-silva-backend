@@ -16,13 +16,6 @@ interface UserInput {
   password: string;
 }
 
-interface MutationResponse {
-  id: number;
-  name: string;
-  birthDate: string;
-  email: string;
-}
-
 const testUser: UserInput = {
   name: 'TestUser3',
   birthDate: '09-06-1998',
