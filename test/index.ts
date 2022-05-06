@@ -7,6 +7,7 @@ import { AppDataSource } from '../src/data-source';
 import { initialSetup } from '../src';
 =======
 import { User } from '../src/entity/User';
+import { generateHash, generateHashPasswordFromSalt } from '../src/utils';
 
 interface UserInput {
   name: string;
@@ -81,5 +82,18 @@ describe('Mutation Test', () => {
     expect(createUseMutation.data.data.createUser.name).to.be.eq(testUser.name);
     expect(createUseMutation.data.data.createUser.birthDate).to.be.eq(testUser.birthDate);
     expect(!!createUseMutation.data.data.createUser.id).to.exist;
+  });
+
+  it('Is user included in database?', async () => {
+    const testUserFromDatabase = await AppDataSource.manager.findOneBy(User, { email: testUser.email });
+
+    const testUserHashedPasword = generateHashPasswordFromSalt(testUserFromDatabase.salt, testUser.password);
+    delete testUserFromDatabase.id;
+    delete testUserFromDatabase.salt;
+
+    expect(testUserFromDatabase).to.be.deep.eq({
+      ...testUser,
+      password: testUserHashedPasword,
+    });
   });
 });
