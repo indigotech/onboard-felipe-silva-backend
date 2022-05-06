@@ -81,7 +81,7 @@ describe('Mutation Test', () => {
     expect(createUseMutation.data.data.createUser.email).to.be.eq(testUser.email);
     expect(createUseMutation.data.data.createUser.name).to.be.eq(testUser.name);
     expect(createUseMutation.data.data.createUser.birthDate).to.be.eq(testUser.birthDate);
-    expect(!!createUseMutation.data.data.createUser.id).to.exist;
+    expect(createUseMutation.data.data.createUser.id).to.exist;
   });
 
   it('Is user included in database?', async () => {
@@ -95,5 +95,13 @@ describe('Mutation Test', () => {
       ...testUser,
       password: testUserHashedPasword,
     });
+  });
+
+  it('User has been removed', async () => {
+    await AppDataSource.manager.delete(User, { email: testUser.email });
+
+    const testUserFromDatabase = await AppDataSource.manager.findOneBy(User, { email: testUser.email });
+
+    expect(!testUserFromDatabase).to.exist;
   });
 });
