@@ -9,35 +9,33 @@ const server = new ApolloServer({
   schema,
 });
 
-(async () => {
-  describe('DataSource Initiation', async () => {
-    AppDataSource.initialize();
+let url: string;
 
-    before(() => {
-      AppDataSource.initialize();
-    });
+const initialSetup = async () => {
+  await AppDataSource.initialize().then((data) => console.log(`Database Initialized: ${data.isInitialized}`));
 
-    let connectedUrl: string;
-    before(async () => {
-      const { url } = await server.listen({ port });
-      connectedUrl = url;
-    });
-
-    it('Server Connected to localhost:3030', () => expect(connectedUrl).to.be.eq('http://localhost:3030/'));
-
-    let queryResult: string;
-    before(async () => {
-      const axiosCall = await axios({
-        url: connectedUrl,
-        method: 'post',
-        data: {
-          query: `query Query{hello}`,
-        },
-      });
-
-      queryResult = axiosCall.data.data.hello;
-    });
-
-    it('Query Result', () => expect(queryResult).to.be.eq('Hello World!'));
+  await server.listen({ port }).then((data) => {
+    url = data.url;
+    console.log(`Apollo Server Initialized: ${data.url}`);
   });
-})();
+};
+
+before(async () => {
+  await initialSetup();
+});
+
+describe('Queries Test', () => {
+  it('Hello Query', async () => {
+    const axiosCall = await axios({
+      url,
+      method: 'post',
+      data: {
+        query: `query Query{hello}`,
+      },
+    });
+
+    const queryResult = axiosCall.data;
+
+    expect(queryResult).to.be.deep.eq({ data: { hello: 'Hello World!' } });
+  });
+});
