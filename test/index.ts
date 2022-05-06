@@ -1,10 +1,11 @@
 import axios, { AxiosResponse } from 'axios';
-import { ApolloServer } from 'apollo-server';
+import { ApolloError, ApolloServer } from 'apollo-server';
 import { schema } from '../src/schema';
 import { expect } from 'chai';
 import { AppDataSource } from '../src/data-source';
 import { User } from '../src/entity/User';
-import { generateHash, generateHashPasswordFromSalt } from '../src/utils';
+import { generateHashPasswordFromSalt } from '../src/utils';
+import { GraphQLError } from 'graphql';
 
 interface UserInput {
   name: string;
@@ -17,12 +18,24 @@ const testUser: UserInput = {
   name: 'TestUser3',
   birthDate: '09-06-1998',
   email: 'testmail@test.com',
-  password: '1234567a',
+  password: '1234567',
 };
+
+interface UserInputError {
+  code: number;
+  message: string;
+  additionalInfo?: '';
+}
 
 const port = process.env.APOLLO_PORT;
 const server = new ApolloServer({
   schema,
+  formatError: (error: GraphQLError) => {
+    // if (error.originalError instanceof Error) {
+    //   return error;
+    // }
+    return { code: 0, message: 'erro', additionalInfo: null };
+  },
 });
 
 let url: string;
@@ -75,6 +88,8 @@ describe('Mutation Test', () => {
         variables: { credentials: testUser },
       },
     });
+
+    console.log(createUseMutation.data);
 
     expect(createUseMutation.data.data.createUser.email).to.be.eq(testUser.email);
     expect(createUseMutation.data.data.createUser.name).to.be.eq(testUser.name);
