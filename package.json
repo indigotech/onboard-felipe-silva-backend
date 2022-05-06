@@ -7,7 +7,7 @@
     "test": "APP_ENV=test mocha --require ts-node/register test/index.ts",
     "dev": "ts-node-dev --transpile-only --no-notify --exit-child src/index.ts",
     "generate": "ts-node --transpile-only src/schema.ts",
-    "start": "APP_ENV=local ts-node src/index.ts",
+    "start": "ts-node src/index.ts",
     "typeorm": "typeorm-ts-node-commonjs"
   },
   "repository": {

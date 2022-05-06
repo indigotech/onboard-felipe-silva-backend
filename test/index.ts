@@ -4,7 +4,7 @@ import { schema } from '../src/schema';
 import { expect } from 'chai';
 import { AppDataSource } from '../src/data-source';
 
-const port = 3030;
+const port = process.env.APOLLO_PORT;
 const server = new ApolloServer({
   schema,
 });

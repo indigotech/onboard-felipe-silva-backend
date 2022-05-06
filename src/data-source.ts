@@ -3,14 +3,10 @@ import { User } from './entity/User';
 import { config } from 'dotenv';
 import path = require('path');
 
-let env_prefix: string;
-switch (process.env.APP_ENV) {
-  case 'local':
-    env_prefix = '';
-    break;
-  case 'test':
-    env_prefix = 'test';
-    break;
+let env_prefix: string = '';
+
+if (process.env.APP_ENV === 'test') {
+  env_prefix = 'test';
 }
 
 config({
