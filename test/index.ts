@@ -6,6 +6,7 @@ import { AppDataSource } from '../src/data-source';
 import { User } from '../src/entity/User';
 import { generateHashPasswordFromSalt } from '../src/utils';
 import { GraphQLError } from 'graphql';
+import { errorsMessages, InputError } from '../src/error';
 
 interface UserInput {
   name: string;
@@ -21,20 +22,23 @@ const testUser: UserInput = {
   password: '1234567',
 };
 
-interface UserInputError {
-  code: number;
-  message: string;
-  additionalInfo?: '';
-}
-
 const port = process.env.APOLLO_PORT;
 const server = new ApolloServer({
   schema,
   formatError: (error: GraphQLError) => {
-    // if (error.originalError instanceof Error) {
-    //   return error;
-    // }
-    return { code: 0, message: 'erro', additionalInfo: null };
+    if (error.originalError instanceof InputError) {
+      console.log('Inside instanceof');
+
+      return {
+        message: error.originalError.message,
+        code: error.originalError.code,
+        additionalInfo: error.originalError.additionalInfo,
+      };
+    }
+
+    const originalError = error.originalError as InputError;
+
+    return { message: originalError.message, code: originalError.code, additionalInfo: originalError.additionalInfo };
   },
 });
 
