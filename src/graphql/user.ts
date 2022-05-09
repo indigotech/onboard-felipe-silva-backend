@@ -60,10 +60,9 @@ export const UserInput = inputObjectType({
 export const CreateUserResponse = objectType({
   name: 'CreateUserResponse',
   definition(t) {
-    t.int('id');
-    t.string('name');
-    t.string('email');
-    t.string('birthDate');
-    t.string('error');
+    t.nonNull.int('id');
+    t.nonNull.string('name');
+    t.nonNull.string('email');
+    t.nonNull.string('birthDate');
   },
 });
