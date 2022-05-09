@@ -122,6 +122,38 @@ describe('Create User Mutation', () => {
   after(async () => {
     await AppDataSource.manager.delete(User, { email: correctInputUser.email });
   });
+
+  it('User Mutation', async () => {
+    const loginCredentials = {
+      email: 'test@test.com',
+      password: '1234',
+    };
+
+    const loginMutation = await axios({
+      url,
+      method: 'post',
+      data: {
+        query: `
+          mutation Login($credentials: LoginInput!) {
+            login(data: $credentials) {
+              user {              
+                id,
+                name,
+                email,
+                birthDate
+              },
+              token
+            }
+          }
+        `,
+        variables: { credentials: loginCredentials },
+      },
+    });
+
+    const resultData = loginMutation.data.data.login;
+
+    expect(!!resultData.token).to.be.true;
+  });
 });
 
 describe('Login Mutation', () => {
