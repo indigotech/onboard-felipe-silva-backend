@@ -6,7 +6,7 @@ import { AppDataSource } from '../src/data-source';
 import { User } from '../src/entity/User';
 import { generateHashPasswordFromSalt } from '../src/utils';
 import { GraphQLError } from 'graphql';
-import { isInputError } from '../src/error';
+import { errorsMessages, isInputError } from '../src/error';
 
 interface UserInput {
   name: string;
@@ -15,10 +15,17 @@ interface UserInput {
   password: string;
 }
 
-const testUser: UserInput = {
+const correctInputUser: UserInput = {
   name: 'TestUser3',
   birthDate: '09-06-1998',
-  email: 'testmail@test.com',
+  email: 'testmail2@test.com',
+  password: '1234567abc',
+};
+
+const weakPasswordUser: UserInput = {
+  name: 'TestUser3',
+  birthDate: '09-06-1998',
+  email: 'testmailweakpassword@test.com',
   password: '1234567',
 };
 
@@ -68,7 +75,7 @@ describe('Queries Test', () => {
 });
 
 describe('Mutation Test', () => {
-  it('Create Mutation', async () => {
+  it('Correct Create Mutation', async () => {
     const createUseMutation = await axios({
       url,
       method: 'post',
@@ -83,36 +90,95 @@ describe('Mutation Test', () => {
             }
           }
         `,
-        variables: { credentials: testUser },
+        variables: { credentials: correctInputUser },
       },
     });
 
-    console.log(createUseMutation.data);
+    const mutationReturn = createUseMutation.data.data.createUser;
 
-    expect(createUseMutation.data.data.createUser.email).to.be.eq(testUser.email);
-    expect(createUseMutation.data.data.createUser.name).to.be.eq(testUser.name);
-    expect(createUseMutation.data.data.createUser.birthDate).to.be.eq(testUser.birthDate);
+    expect({
+      email: mutationReturn.email,
+      name: mutationReturn.name,
+      birthDate: mutationReturn.birthDate,
+    }).to.be.deep.eq({
+      email: correctInputUser.email,
+      name: correctInputUser.name,
+      birthDate: correctInputUser.birthDate,
+    });
     expect(createUseMutation.data.data.createUser.id).to.exist;
-  });
 
-  it('Is user included in database?', async () => {
-    const testUserFromDatabase = await AppDataSource.manager.findOneBy(User, { email: testUser.email });
+    const testUserFromDatabase = await AppDataSource.manager.findOneBy(User, { email: correctInputUser.email });
 
-    const testUserHashedPasword = generateHashPasswordFromSalt(testUserFromDatabase.salt, testUser.password);
-    delete testUserFromDatabase.id;
+    expect(Number.isInteger(testUserFromDatabase.id)).to.be.true;
+
+    const testUserHashedPasword = generateHashPasswordFromSalt(testUserFromDatabase.salt, correctInputUser.password);
     delete testUserFromDatabase.salt;
-
+    delete testUserFromDatabase.id;
     expect(testUserFromDatabase).to.be.deep.eq({
-      ...testUser,
+      ...correctInputUser,
       password: testUserHashedPasword,
     });
   });
 
-  it('User has been removed', async () => {
-    await AppDataSource.manager.delete(User, { email: testUser.email });
+  it('Email Already Exists Mutation', async () => {
+    const createUseMutation = await axios({
+      url,
+      method: 'post',
+      data: {
+        query: `
+          mutation CreateUser($credentials: UserInput!) {
+            createUser(data: $credentials) {
+              id,
+              name,
+              email,
+              birthDate
+            }
+          }
+        `,
+        variables: { credentials: correctInputUser },
+      },
+    });
 
-    const testUserFromDatabase = await AppDataSource.manager.findOneBy(User, { email: testUser.email });
+    const emailError = {
+      message: errorsMessages.existingEmail,
+      code: 400,
+      additionalInfo: null,
+    };
 
-    expect(!testUserFromDatabase).to.exist;
+    const errors = createUseMutation.data.errors;
+
+    expect(errors).to.be.an('array').that.deep.includes(emailError);
+  });
+
+  it('Weak Password Mutation', async () => {
+    const createUseMutation = await axios({
+      url,
+      method: 'post',
+      data: {
+        query: `
+          mutation CreateUser($credentials: UserInput!) {
+            createUser(data: $credentials) {
+              id,
+              name,
+              email,
+              birthDate
+            }
+          }
+        `,
+        variables: { credentials: weakPasswordUser },
+      },
+    });
+
+    const weakPasswordError = {
+      code: 400,
+      message: errorsMessages.weakPassword,
+      additionalInfo: null,
+    };
+
+    const errors = createUseMutation.data.errors;
+
+    expect(errors).to.be.an('array').that.deep.includes(weakPasswordError);
+
+    await AppDataSource.manager.delete(User, { email: correctInputUser.email });
   });
 });
