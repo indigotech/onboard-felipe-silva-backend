@@ -3,22 +3,14 @@ import { ApolloServer } from 'apollo-server';
 import { schema } from '../src/schema';
 import { expect } from 'chai';
 import { AppDataSource } from '../src/data-source';
+import { initialSetup } from '../src';
 
 const port = process.env.APOLLO_PORT;
 const server = new ApolloServer({
   schema,
 });
 
-let url: string;
-
-const initialSetup = async () => {
-  await AppDataSource.initialize().then((data) => console.log(`Database Initialized: ${data.isInitialized}`));
-
-  await server.listen({ port }).then((data) => {
-    url = data.url;
-    console.log(`Apollo Server Initialized: ${data.url}`);
-  });
-};
+const url = `http://localhost:${port}/`;
 
 before(async () => {
   await initialSetup();
