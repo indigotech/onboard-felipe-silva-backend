@@ -142,6 +142,38 @@ describe('Mutation Test', () => {
 
     expect(errors).to.be.deep.eq([weakPasswordError]);
   });
+
+  it('User Mutation', async () => {
+    const loginCredentials = {
+      email: 'test@test.com',
+      password: '1234',
+    };
+
+    const loginMutation = await axios({
+      url,
+      method: 'post',
+      data: {
+        query: `
+          mutation Login($credentials: LoginInput!) {
+            login(data: $credentials) {
+              user {              
+                id,
+                name,
+                email,
+                birthDate
+              },
+              token
+            }
+          }
+        `,
+        variables: { credentials: loginCredentials },
+      },
+    });
+
+    const resultData = loginMutation.data.data.login;
+
+    expect(!!resultData.token).to.be.true;
+  });
 });
 
 after(async () => {
