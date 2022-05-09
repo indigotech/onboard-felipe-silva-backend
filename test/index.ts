@@ -7,7 +7,7 @@ import { AppDataSource } from '../src/data-source';
 import { initialSetup } from '../src';
 =======
 import { User } from '../src/entity/User';
-import { generateHash, generateHashPasswordFromSalt } from '../src/utils';
+import { generateHashPasswordWithSalt } from '../src/utils';
 
 interface UserInput {
   name: string;
@@ -71,30 +71,31 @@ describe('Mutation Test', () => {
       },
     });
 
-    expect(createUseMutation.data.data.createUser.email).to.be.eq(testUser.email);
-    expect(createUseMutation.data.data.createUser.name).to.be.eq(testUser.name);
-    expect(createUseMutation.data.data.createUser.birthDate).to.be.eq(testUser.birthDate);
-    expect(createUseMutation.data.data.createUser.id).to.exist;
-  });
+    expect({
+      email: createUseMutation.data.data.createUser.email,
+      name: createUseMutation.data.data.createUser.name,
+      birthDate: createUseMutation.data.data.createUser.birthDate,
+    }).to.be.deep.eq({
+      email: testUser.email,
+      name: testUser.name,
+      birthDate: testUser.birthDate,
+    });
 
-  it('Is user included in database?', async () => {
+    expect(createUseMutation.data.data.createUser.id).to.exist;
+
     const testUserFromDatabase = await AppDataSource.manager.findOneBy(User, { email: testUser.email });
 
-    const testUserHashedPasword = generateHashPasswordFromSalt(testUserFromDatabase.salt, testUser.password);
+    expect(Number.isInteger(testUserFromDatabase.id)).to.be.eq(true);
+
     delete testUserFromDatabase.id;
+    const testUserHashedPasword = generateHashPasswordWithSalt(testUserFromDatabase.salt, testUser.password);
     delete testUserFromDatabase.salt;
 
     expect(testUserFromDatabase).to.be.deep.eq({
       ...testUser,
       password: testUserHashedPasword,
     });
-  });
 
-  it('User has been removed', async () => {
     await AppDataSource.manager.delete(User, { email: testUser.email });
-
-    const testUserFromDatabase = await AppDataSource.manager.findOneBy(User, { email: testUser.email });
-
-    expect(!testUserFromDatabase).to.exist;
   });
 });
