@@ -1,31 +1,33 @@
-import axios from 'axios';
+import axios, { AxiosResponse } from 'axios';
 import { ApolloServer } from 'apollo-server';
 import { schema } from '../src/schema';
-import assert = require('assert');
-const port = 3030;
+import { expect } from 'chai';
+import { AppDataSource } from '../src/data-source';
+import { initialSetup } from '../src';
 
+const port = process.env.APOLLO_PORT;
 const server = new ApolloServer({
   schema,
 });
 
-describe('Axios Call', () => {
-  let connectedUrl: string;
-  before(async () => {
-    const { url } = await server.listen({ port });
-    connectedUrl = url;
-  });
+const url = `http://localhost:${port}/`;
 
-  it('Hello', async () => {
-    const data = await axios({
-      url: connectedUrl,
+before(async () => {
+  await initialSetup();
+});
+
+describe('Queries Test', () => {
+  it('Hello Query', async () => {
+    const axiosCall = await axios({
+      url,
       method: 'post',
       data: {
         query: `query Query{hello}`,
       },
-    }).then((result) => {
-      return result.status;
     });
 
-    assert.equal(data, 200);
+    const queryResult = axiosCall.data;
+
+    expect(queryResult).to.be.deep.eq({ data: { hello: 'Hello World!' } });
   });
 });
