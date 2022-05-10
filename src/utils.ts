@@ -14,6 +14,10 @@ export const generateHash = (password: string): { salt: string; hashedPassword: 
   return { salt, hashedPassword };
 };
 
+<<<<<<< HEAD
 export const generateHashPasswordWithSalt = (salt: string, password: string) => {
+=======
+export const generateHashPasswordFromSalt = (salt: string, password: string) => {
+>>>>>>> 9ab291e (user included in db)
   return scryptSync(password, salt, 64).toString('hex');
 };
