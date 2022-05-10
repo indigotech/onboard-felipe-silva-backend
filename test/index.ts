@@ -4,6 +4,7 @@ import { AppDataSource, server } from '../src/data-source';
 import { errorsMessages } from '../src/error';
 import { User } from '../src/entity/User';
 import { generateHashPasswordWithSalt } from '../src/utils';
+import { GraphQLError } from 'graphql';
 
 interface UserInput {
   name: string;
@@ -25,12 +26,6 @@ const testUser: UserInput = {
   email: 'testmail@test.com',
   password: '1234567',
 };
-
-interface UserInputError {
-  code: number;
-  message: string;
-  additionalInfo?: '';
-}
 
 const port = process.env.APOLLO_PORT;
 interface UserInput {
