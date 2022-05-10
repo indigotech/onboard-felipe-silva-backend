@@ -1,32 +1,12 @@
 import axios from 'axios';
 import { expect } from 'chai';
 import { AppDataSource, server } from '../src/data-source';
-import { errorsMessages } from '../src/error';
 import { User } from '../src/entity/User';
 import { generateHashPasswordWithSalt } from '../src/utils';
-
-interface UserInput {
-  name: string;
-  birthDate: string;
-  email: string;
-  password: string;
-}
-
-interface MutationResponse {
-  id: number;
-  name: string;
-  birthDate: string;
-  email: string;
-}
-
-const testUser: UserInput = {
-  name: 'TestUser3',
-  birthDate: '09-06-1998',
-  email: 'testmail@test.com',
-  password: '1234567',
-};
+import { errorsMessages } from '../src/error';
 
 const port = process.env.APOLLO_PORT;
+
 interface UserInput {
   name: string;
   birthDate: string;
@@ -101,10 +81,6 @@ describe('Queries Test', () => {
 });
 
 describe('Mutation Test', () => {
-  after(async () => {
-    await AppDataSource.manager.delete(User, { email: correctInputUser.email });
-  });
-
   it('shoud create user successfully', async () => {
     const createUseMutation = await axios({
       url,
@@ -166,17 +142,8 @@ describe('Mutation Test', () => {
 
     expect(errors).to.be.deep.eq([weakPasswordError]);
   });
+});
 
-  it('Is user included in database?', async () => {
-    const testUserFromDatabase = await AppDataSource.manager.findOneBy(User, { email: testUser.email });
-
-    const testUserHashedPasword = generateHashPasswordWithSalt(testUserFromDatabase.salt, testUser.password);
-    delete testUserFromDatabase.id;
-    delete testUserFromDatabase.salt;
-
-    expect(testUserFromDatabase).to.be.deep.eq({
-      ...testUser,
-      password: testUserHashedPasword,
-    });
-  });
+after(async () => {
+  await AppDataSource.manager.delete(User, { email: correctInputUser.email });
 });
