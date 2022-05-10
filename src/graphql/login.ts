@@ -1,3 +1,4 @@
+import { sign } from 'jsonwebtoken';
 import { extendType, FieldResolver, inputObjectType, nonNull, objectType } from 'nexus';
 import { AppDataSource } from '../data-source';
 import { User } from '../entity/User';
@@ -5,14 +6,10 @@ import { AuthorizationError, errorsMessages, InputError } from '../error';
 import { generateHashPasswordFromSalt, isEmailValid, isPasswordValid } from '../utils';
 import { UserResponse } from './user';
 
-const mockLoginResult = {
-  user: {
-    name: 'Mock',
-    id: 0,
-    email: 'test@test.com',
-    birthDate: '04-04-1994',
-  },
-  token: ' ',
+const generateToken = (email: string, rememberMe: boolean) => {
+  const token = sign({ email: email }, 'supersecret', { expiresIn: rememberMe ? '1w' : '1d' });
+
+  return token;
 };
 
 const loginResolver: FieldResolver<'Mutation', 'login'> = async (_parent, args) => {
@@ -32,7 +29,9 @@ const loginResolver: FieldResolver<'Mutation', 'login'> = async (_parent, args) 
     throw new AuthorizationError(errorsMessages.invalidInput);
   }
 
-  return mockLoginResult;
+  const token = generateToken(user.email, args.data.rememberMe);
+
+  return { user, token };
 };
 
 export const Login = extendType({
@@ -54,6 +53,7 @@ export const LoginInput = inputObjectType({
   definition(t) {
     t.nonNull.string('password');
     t.nonNull.string('email');
+    t.nonNull.boolean('rememberMe');
   },
 });
 

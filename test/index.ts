@@ -5,6 +5,7 @@ import { User } from '../src/entity/User';
 import { generateHashPasswordFromSalt } from '../src/utils';
 import { errorsMessages } from '../src/error';
 import { createUserMutation, loginMutation } from './utils';
+import { JwtPayload, verify } from 'jsonwebtoken';
 
 const port = process.env.APOLLO_PORT;
 
@@ -145,6 +146,7 @@ describe('Login Mutation', () => {
     const loginCredentials = {
       email: correctInputUser.email,
       password: correctInputUser.password,
+      rememberMe: false,
     };
 
     const mutation = await loginMutation(url, loginCredentials);
@@ -158,6 +160,7 @@ describe('Login Mutation', () => {
     const userCredentials = {
       email: correctInputUser.email,
       password: '1234',
+      rememberMe: false,
     };
 
     const mutation = await loginMutation(url, userCredentials);
@@ -171,6 +174,7 @@ describe('Login Mutation', () => {
     const userCredentials = {
       email: 'aaaaaaa',
       password: '1234768Aaa',
+      rememberMe: false,
     };
 
     const mutation = await loginMutation(url, userCredentials);
@@ -184,6 +188,7 @@ describe('Login Mutation', () => {
     const userCredentials = {
       email: 'emailemail@email.com',
       password: '1234568asA',
+      rememberMe: false,
     };
 
     const mutation = await loginMutation(url, userCredentials);
@@ -197,6 +202,7 @@ describe('Login Mutation', () => {
     const userCredentials = {
       email: correctInputUser.email,
       password: '1234568asAsd',
+      rememberMe: false,
     };
 
     const mutation = await loginMutation(url, userCredentials);
