@@ -1,9 +1,30 @@
 import axios from 'axios';
 import { expect } from 'chai';
 import { AppDataSource, server } from '../src/data-source';
-import { User } from '../src/entity/User';
 import { generateHashPasswordWithSalt } from '../src/utils';
 import { errorsMessages } from '../src/error';
+import { User } from '../src/entity/User';
+
+interface UserInput {
+  name: string;
+  birthDate: string;
+  email: string;
+  password: string;
+}
+
+interface MutationResponse {
+  id: number;
+  name: string;
+  birthDate: string;
+  email: string;
+}
+
+const testUser: UserInput = {
+  name: 'TestUser3',
+  birthDate: '09-06-1998',
+  email: 'testmail@test.com',
+  password: '1234567a',
+};
 
 const port = process.env.APOLLO_PORT;
 
@@ -81,6 +102,10 @@ describe('Queries Test', () => {
 });
 
 describe('Mutation Test', () => {
+  after(async () => {
+    await AppDataSource.manager.delete(User, { email: correctInputUser.email });
+  });
+
   it('shoud create user successfully', async () => {
     const createUseMutation = await axios({
       url,
@@ -142,8 +167,4 @@ describe('Mutation Test', () => {
 
     expect(errors).to.be.deep.eq([weakPasswordError]);
   });
-});
-
-after(async () => {
-  await AppDataSource.manager.delete(User, { email: correctInputUser.email });
 });
