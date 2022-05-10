@@ -3,9 +3,7 @@ import { ApolloServer } from 'apollo-server';
 import { schema } from '../src/schema';
 import { expect } from 'chai';
 import { AppDataSource } from '../src/data-source';
-<<<<<<< HEAD
 import { initialSetup } from '../src';
-=======
 import { User } from '../src/entity/User';
 import { generateHashPasswordWithSalt } from '../src/utils';
 
@@ -22,12 +20,8 @@ const testUser: UserInput = {
   email: 'testmail@test.com',
   password: '1234567a',
 };
->>>>>>> ffae8d4 (test create mutation)
 
 const port = process.env.APOLLO_PORT;
-const server = new ApolloServer({
-  schema,
-});
 
 const url = `http://localhost:${port}/`;
 
