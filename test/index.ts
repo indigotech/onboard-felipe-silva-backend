@@ -76,6 +76,8 @@ describe('Create User Mutation', () => {
     });
 
     expect(mutationReturn.id).to.exist;
+    expect(Number.isInteger(mutationReturn.id)).to.be.true;
+    expect(mutationReturn.id > 0).to.be.true;
 
     const testUserFromDatabase = await AppDataSource.manager.findOneBy(User, { email: correctInputUser.email });
 

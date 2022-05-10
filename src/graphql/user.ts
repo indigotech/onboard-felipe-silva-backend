@@ -3,7 +3,6 @@ import { User } from '../entity/User';
 import { AppDataSource } from '../data-source';
 import { isPasswordValid, generateHash } from '../utils';
 import { errorsMessages, InputError } from '../error';
-import { ApolloError } from 'apollo-server';
 
 const resolveCreateUser: FieldResolver<'Mutation', 'createUser'> = async (_parent, args) => {
   const { name, email, birthDate, password } = args.data;
@@ -12,14 +11,14 @@ const resolveCreateUser: FieldResolver<'Mutation', 'createUser'> = async (_paren
   const isPasswordStrong: boolean = isPasswordValid(password);
 
   if (!isPasswordStrong) {
-    throw new InputError(400, errorsMessages.weakPassword);
+    throw new InputError(errorsMessages.weakPassword);
   }
 
   const existingUser = await AppDataSource.manager.findOneBy(User, { email });
   const thisUserAlreadyExists = existingUser !== null;
 
   if (thisUserAlreadyExists) {
-    throw new InputError(400, errorsMessages.existingEmail);
+    throw new InputError(errorsMessages.existingEmail);
   }
 
   const { salt, hashedPassword } = generateHash(password);
@@ -37,7 +36,7 @@ export const CreateUser = extendType({
   type: 'Mutation',
   definition(t) {
     t.nonNull.field('createUser', {
-      type: CreateUserResponse,
+      type: UserResponse,
       args: {
         data: nonNull(UserInput),
       },
@@ -57,8 +56,8 @@ export const UserInput = inputObjectType({
   },
 });
 
-export const CreateUserResponse = objectType({
-  name: 'CreateUserResponse',
+export const UserResponse = objectType({
+  name: 'UserResponse',
   definition(t) {
     t.nonNull.int('id');
     t.nonNull.string('name');

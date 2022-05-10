@@ -2,11 +2,24 @@ export class InputError extends Error {
   code: number;
   additionalInfo?: string;
 
-  constructor(code: number, message: string, additionalInfo?: string) {
+  constructor(message: string, additionalInfo?: string) {
     super();
 
     this.message = message;
-    this.code = code;
+    this.code = 400;
+    this.additionalInfo = additionalInfo ?? null;
+  }
+}
+
+export class AuthorizationError extends Error {
+  code: number;
+  additionalInfo?: string;
+
+  constructor(message: string, additionalInfo?: string) {
+    super();
+
+    this.message = message;
+    this.code = 401;
     this.additionalInfo = additionalInfo ?? null;
   }
 }
@@ -18,5 +31,9 @@ export const errorsMessages: Record<string, string> = {
 };
 
 export const isInputError = (error: any): error is InputError => {
-  return error.code === 400 || error.code === 401;
+  return error.code === 400;
+};
+
+export const isAuthorizationError = (error: any): error is AuthorizationError => {
+  return error.code === 401;
 };

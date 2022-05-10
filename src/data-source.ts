@@ -4,7 +4,7 @@ import { config } from 'dotenv';
 import path = require('path');
 import { ApolloServer } from 'apollo-server';
 import { GraphQLError } from 'graphql';
-import { isInputError } from './error';
+import { isAuthorizationError, isInputError } from './error';
 import { schema } from './schema';
 
 let env_prefix: string = '';
@@ -36,7 +36,7 @@ export const server = new ApolloServer({
   formatError: (error: GraphQLError) => {
     const originalError = error.originalError;
 
-    if (isInputError(originalError)) {
+    if (isInputError(originalError) || isAuthorizationError(originalError)) {
       return { message: originalError.message, code: originalError.code, additionalInfo: originalError.additionalInfo };
     } else {
       return error;
