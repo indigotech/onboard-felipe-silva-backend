@@ -25,3 +25,7 @@ export const errorsMessages: { existingEmail: string; weakPassword: string } = {
   weakPassword: 'This e-mail is already in use.',
 >>>>>>> d416809 (deu ruim)
 };
+
+export const isInputError = (error: any): error is InputError => {
+  return error.code === 400;
+};

@@ -4,7 +4,6 @@ import { AppDataSource, server } from '../src/data-source';
 import { errorsMessages } from '../src/error';
 import { User } from '../src/entity/User';
 import { generateHashPasswordWithSalt } from '../src/utils';
-import { GraphQLError } from 'graphql';
 
 interface UserInput {
   name: string;
