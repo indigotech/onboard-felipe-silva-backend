@@ -2,6 +2,8 @@ import { extendType, FieldResolver, inputObjectType, nonNull, objectType } from 
 import { User } from '../entity/User';
 import { AppDataSource } from '../data-source';
 import { isPasswordValid, generateHash } from '../utils';
+import { errorsMessages, InputError } from '../error';
+import { ApolloError } from 'apollo-server';
 
 const resolveCreateUser: FieldResolver<'Mutation', 'createUser'> = async (_parent, args) => {
   const { name, email, birthDate, password } = args.data;
@@ -10,14 +12,14 @@ const resolveCreateUser: FieldResolver<'Mutation', 'createUser'> = async (_paren
   const isPasswordStrong: boolean = isPasswordValid(password);
 
   if (!isPasswordStrong) {
-    throw new Error('Weak password. It needs at least 6 characters, one letter and one digit!');
+    throw new InputError(400, errorsMessages.weakPassword);
   }
 
   const existingUser = await AppDataSource.manager.findOneBy(User, { email });
   const thisUserAlreadyExists = existingUser !== null;
 
   if (thisUserAlreadyExists) {
-    throw new Error('This e-mail is already in use.');
+    throw new InputError(400, errorsMessages.existingEmail);
   }
 
   const { salt, hashedPassword } = generateHash(password);

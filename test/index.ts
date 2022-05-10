@@ -1,11 +1,11 @@
-import axios, { AxiosResponse } from 'axios';
-import { ApolloServer } from 'apollo-server';
-import { schema } from '../src/schema';
+import axios from 'axios';
 import { expect } from 'chai';
-import { AppDataSource } from '../src/data-source';
-import { initialSetup } from '../src';
+import { AppDataSource, server } from '../src/data-source';
 import { User } from '../src/entity/User';
 import { generateHashPasswordWithSalt } from '../src/utils';
+import { errorsMessages } from '../src/error';
+
+const port = process.env.APOLLO_PORT;
 
 interface UserInput {
   name: string;
@@ -14,16 +14,51 @@ interface UserInput {
   password: string;
 }
 
-const testUser: UserInput = {
+const correctInputUser: UserInput = {
   name: 'TestUser3',
   birthDate: '09-06-1998',
-  email: 'testmail@test.com',
-  password: '1234567a',
+  email: 'testmail2@test.com',
+  password: '1234567abc',
 };
 
-const port = process.env.APOLLO_PORT;
+const weakPasswordUser: UserInput = {
+  name: 'TestUser3',
+  birthDate: '09-06-1998',
+  email: 'testmailweakpassword@test.com',
+  password: '1234567',
+};
 
-const url = `http://localhost:${port}/`;
+const query = `
+mutation CreateUser($credentials: UserInput!) {
+  createUser(data: $credentials) {
+    id,
+    name,
+    email,
+    birthDate
+  }
+}
+`;
+
+const createUseMutation = async (credentials: UserInput) => {
+  return axios({
+    url,
+    method: 'post',
+    data: {
+      query,
+      variables: { credentials },
+    },
+  });
+};
+
+let url: string;
+const initialSetup = async () => {
+  await AppDataSource.initialize().then((data) => console.log(`Database Initialized: ${data.isInitialized}`));
+
+  await server.listen({ port }).then((data) => {
+    url = data.url;
+    console.log(`Apollo Server Initialized: ${data.url}`);
+  });
+};
 
 before(async () => {
   await initialSetup();
@@ -46,50 +81,69 @@ describe('Queries Test', () => {
 });
 
 describe('Mutation Test', () => {
-  it('Create Mutation', async () => {
+  it('shoud create user successfully', async () => {
     const createUseMutation = await axios({
       url,
       method: 'post',
       data: {
-        query: `
-          mutation CreateUser($credentials: UserInput!) {
-            createUser(data: $credentials) {
-              id,
-              name,
-              email,
-              birthDate
-            }
-          }
-        `,
-        variables: { credentials: testUser },
+        query,
+        variables: { credentials: correctInputUser },
       },
     });
 
-    expect({
-      email: createUseMutation.data.data.createUser.email,
-      name: createUseMutation.data.data.createUser.name,
-      birthDate: createUseMutation.data.data.createUser.birthDate,
-    }).to.be.deep.eq({
-      email: testUser.email,
-      name: testUser.name,
-      birthDate: testUser.birthDate,
+    const { id, ...userResponseFields } = createUseMutation.data.data.createUser;
+
+    expect(userResponseFields).to.be.deep.eq({
+      email: correctInputUser.email,
+      name: correctInputUser.name,
+      birthDate: correctInputUser.birthDate,
     });
 
-    expect(createUseMutation.data.data.createUser.id).to.exist;
+    expect(id).to.exist;
 
-    const testUserFromDatabase = await AppDataSource.manager.findOneBy(User, { email: testUser.email });
+    const testUserFromDatabase = await AppDataSource.manager.findOneBy(User, { email: correctInputUser.email });
 
-    expect(Number.isInteger(testUserFromDatabase.id)).to.be.eq(true);
+    expect(Number.isInteger(testUserFromDatabase.id)).to.be.true;
 
-    delete testUserFromDatabase.id;
-    const testUserHashedPasword = generateHashPasswordWithSalt(testUserFromDatabase.salt, testUser.password);
+    const testUserHashedPasword = generateHashPasswordWithSalt(testUserFromDatabase.salt, correctInputUser.password);
     delete testUserFromDatabase.salt;
 
     expect(testUserFromDatabase).to.be.deep.eq({
-      ...testUser,
+      ...correctInputUser,
       password: testUserHashedPasword,
+      id,
     });
-
-    await AppDataSource.manager.delete(User, { email: testUser.email });
   });
+
+  it('should return email already exists error', async () => {
+    const mutation = await createUseMutation(correctInputUser);
+
+    const emailError = {
+      message: errorsMessages.existingEmail,
+      code: 400,
+      additionalInfo: null,
+    };
+
+    const errors = mutation.data.errors;
+
+    expect(errors).to.be.deep.eq([emailError]);
+  });
+
+  it('should return weak password error', async () => {
+    const mutation = await createUseMutation(weakPasswordUser);
+
+    const weakPasswordError = {
+      code: 400,
+      message: errorsMessages.weakPassword,
+      additionalInfo: null,
+    };
+
+    const errors = mutation.data.errors;
+
+    expect(errors).to.be.deep.eq([weakPasswordError]);
+  });
+});
+
+after(async () => {
+  await AppDataSource.manager.delete(User, { email: correctInputUser.email });
 });
