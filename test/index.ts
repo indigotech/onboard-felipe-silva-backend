@@ -23,11 +23,16 @@ const testUser: UserInput = {
   name: 'TestUser3',
   birthDate: '09-06-1998',
   email: 'testmail@test.com',
-  password: '1234567a',
+  password: '1234567',
 };
 
-const port = process.env.APOLLO_PORT;
+interface UserInputError {
+  code: number;
+  message: string;
+  additionalInfo?: '';
+}
 
+const port = process.env.APOLLO_PORT;
 interface UserInput {
   name: string;
   birthDate: string;
