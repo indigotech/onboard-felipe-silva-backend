@@ -66,6 +66,10 @@ describe('Create User Mutation', () => {
 
     const mutationReturn = mutation.data.data.createUser;
 
+    const testUserFromDatabase = await AppDataSource.manager.findOneBy(User, { email: correctInputUser.email });
+
+    const testUserHashedPasword = generateHashPasswordFromSalt(testUserFromDatabase.salt, correctInputUser.password);
+
     expect({
       email: mutationReturn.email,
       name: mutationReturn.name,
@@ -78,11 +82,8 @@ describe('Create User Mutation', () => {
 
     expect(mutationReturn.id).to.exist;
 
-    const testUserFromDatabase = await AppDataSource.manager.findOneBy(User, { email: correctInputUser.email });
-
     expect(Number.isInteger(testUserFromDatabase.id)).to.be.true;
 
-    const testUserHashedPasword = generateHashPasswordFromSalt(testUserFromDatabase.salt, correctInputUser.password);
     delete testUserFromDatabase.salt;
     delete testUserFromDatabase.id;
 
@@ -150,20 +151,21 @@ describe('Login Mutation', () => {
 
     const rememberLoginData = mutationWithRememberOn.data.data.login;
 
-    expect(rememberLoginData.token).to.not.be.empty;
-
     const rememberToken = verify(rememberLoginData.token, 'supersecret') as JwtPayload;
 
     const mutationWithRememberOff = await loginMutation(url, { ...loginCredentials, rememberMe: false });
 
     const normalLoginData = mutationWithRememberOff.data.data.login;
 
-    expect(normalLoginData.token).to.not.be.empty;
-
     const normalToken = verify(normalLoginData.token, 'supersecret') as JwtPayload;
 
     const expirationWithoutRemember = normalToken.exp - normalToken.iat;
+
     const expirationWithRememeber = rememberToken.exp - rememberToken.iat;
+
+    expect(rememberLoginData.token).to.not.be.empty;
+
+    expect(normalLoginData.token).to.not.be.empty;
 
     expect(expirationWithRememeber > expirationWithoutRemember).to.be.true;
   });
