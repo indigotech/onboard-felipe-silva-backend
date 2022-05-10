@@ -2,6 +2,10 @@ import { DataSource } from 'typeorm';
 import { User } from './entity/User';
 import { config } from 'dotenv';
 import path = require('path');
+import { ApolloServer } from 'apollo-server';
+import { GraphQLError } from 'graphql';
+import { isInputError } from './error';
+import { schema } from './schema';
 
 let env_prefix: string = '';
 
@@ -25,4 +29,17 @@ export const AppDataSource = new DataSource({
   entities: [User],
   migrations: [],
   subscribers: [],
+});
+
+export const server = new ApolloServer({
+  schema,
+  formatError: (error: GraphQLError) => {
+    const originalError = error.originalError;
+
+    if (isInputError(originalError)) {
+      return { message: originalError.message, code: originalError.code, additionalInfo: originalError.additionalInfo };
+    } else {
+      return error;
+    }
+  },
 });

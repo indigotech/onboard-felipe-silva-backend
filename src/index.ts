@@ -2,7 +2,9 @@ import { User } from './entity/User';
 import 'reflect-metadata';
 import { ApolloServer } from 'apollo-server';
 import { schema } from './schema';
-import { AppDataSource } from './data-source';
+import { AppDataSource, server } from './data-source';
+import { GraphQLError } from 'graphql';
+import { isInputError } from './error';
 
 AppDataSource.initialize()
   .then(async () => {
@@ -12,10 +14,6 @@ AppDataSource.initialize()
     AppDataSource.manager.find(User).then(console.log);
   })
   .catch((error) => console.log(error));
-
-export const server = new ApolloServer({
-  schema,
-});
 
 const port = 3030;
 
