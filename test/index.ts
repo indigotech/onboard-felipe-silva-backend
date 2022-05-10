@@ -2,7 +2,7 @@ import axios from 'axios';
 import { expect } from 'chai';
 import { AppDataSource, server } from '../src/data-source';
 import { User } from '../src/entity/User';
-import { generateHashPasswordWithSalt } from '../src/utils';
+import { generateHashPasswordFromSalt } from '../src/utils';
 import { errorsMessages } from '../src/error';
 import { createUserMutation, loginMutation } from './utils';
 
@@ -28,17 +28,6 @@ const weakPasswordUser: UserInput = {
   email: 'testmailweakpassword@test.com',
   password: '1234567',
 };
-
-const query = `
-mutation CreateUser($credentials: UserInput!) {
-  createUser(data: $credentials) {
-    id,
-    name,
-    email,
-    birthDate
-  }
-}
-`;
 
 let url: string;
 const initialSetup = async () => {
@@ -70,38 +59,35 @@ describe('Queries Test', () => {
   });
 });
 
-describe('Mutation Test', () => {
+describe('Create User Mutation', () => {
   it('shoud create user successfully', async () => {
-    const createUserMutation = await axios({
-      url,
-      method: 'post',
-      data: {
-        query,
-        variables: { credentials: correctInputUser },
-      },
-    });
+    const mutation = await createUserMutation(url, correctInputUser);
 
-    const { id, ...userResponseFields } = createUserMutation.data.data.createUser;
+    const mutationReturn = mutation.data.data.createUser;
 
-    expect(userResponseFields).to.be.deep.eq({
+    expect({
+      email: mutationReturn.email,
+      name: mutationReturn.name,
+      birthDate: mutationReturn.birthDate,
+    }).to.be.deep.eq({
       email: correctInputUser.email,
       name: correctInputUser.name,
       birthDate: correctInputUser.birthDate,
     });
 
-    expect(id).to.exist;
+    expect(mutationReturn.id).to.exist;
 
     const testUserFromDatabase = await AppDataSource.manager.findOneBy(User, { email: correctInputUser.email });
 
     expect(Number.isInteger(testUserFromDatabase.id)).to.be.true;
 
-    const testUserHashedPasword = generateHashPasswordWithSalt(testUserFromDatabase.salt, correctInputUser.password);
+    const testUserHashedPasword = generateHashPasswordFromSalt(testUserFromDatabase.salt, correctInputUser.password);
     delete testUserFromDatabase.salt;
+    delete testUserFromDatabase.id;
 
     expect(testUserFromDatabase).to.be.deep.eq({
       ...correctInputUser,
       password: testUserHashedPasword,
-      id,
     });
   });
 
@@ -134,14 +120,29 @@ describe('Mutation Test', () => {
   });
 });
 
-after(async () => {
-  await AppDataSource.manager.delete(User, { email: correctInputUser.email });
-});
 describe('Login Mutation', () => {
-  it('User Mutation', async () => {
+  const invalidInputError = {
+    message: errorsMessages.invalidInput,
+    code: 400,
+    additionalInfo: null,
+  };
+
+  const unauthorizedError = {
+    message: errorsMessages.invalidInput,
+    code: 401,
+    additionalInfo: null,
+  };
+
+  after(async () => {
+    await AppDataSource.manager.delete(User, { email: correctInputUser.email });
+  });
+
+  it('should enable login', async () => {
+    await createUserMutation(url, correctInputUser);
+
     const loginCredentials = {
-      email: 'test@test.com',
-      password: '1234',
+      email: correctInputUser.email,
+      password: correctInputUser.password,
     };
 
     const mutation = await loginMutation(url, loginCredentials);
@@ -149,5 +150,57 @@ describe('Login Mutation', () => {
     const resultData = mutation.data.data.login;
 
     expect(resultData.token).to.not.be.empty;
+  });
+
+  it('should return invalid password error', async () => {
+    const userCredentials = {
+      email: correctInputUser.email,
+      password: '1234',
+    };
+
+    const mutation = await loginMutation(url, userCredentials);
+
+    const errors = mutation.data.errors;
+
+    expect(errors).to.be.deep.eq([invalidInputError]);
+  });
+
+  it('should return invalid email error', async () => {
+    const userCredentials = {
+      email: 'aaaaaaa',
+      password: '1234768Aaa',
+    };
+
+    const mutation = await loginMutation(url, userCredentials);
+
+    const errors = mutation.data.errors;
+
+    expect(errors).to.be.deep.eq([invalidInputError]);
+  });
+
+  it('should return non registered email error', async () => {
+    const userCredentials = {
+      email: 'emailemail@email.com',
+      password: '1234568asA',
+    };
+
+    const mutation = await loginMutation(url, userCredentials);
+
+    const errors = mutation.data.errors;
+
+    expect(errors).to.be.deep.eq([unauthorizedError]);
+  });
+
+  it('should return wrong password error', async () => {
+    const userCredentials = {
+      email: correctInputUser.email,
+      password: '1234568asAsd',
+    };
+
+    const mutation = await loginMutation(url, userCredentials);
+
+    const errors = mutation.data.errors;
+
+    expect(errors).to.be.deep.eq([unauthorizedError]);
   });
 });
