@@ -1,5 +1,9 @@
 import { extendType, FieldResolver, inputObjectType, nonNull, objectType } from 'nexus';
-import { CreateUserResponse } from './user';
+import { AppDataSource } from '../data-source';
+import { User } from '../entity/User';
+import { AuthorizationError, errorsMessages, InputError } from '../error';
+import { generateHashPasswordFromSalt, isEmailValid, isPasswordValid } from '../utils';
+import { UserResponse } from './user';
 
 const mockLoginResult = {
   user: {
@@ -8,10 +12,26 @@ const mockLoginResult = {
     email: 'test@test.com',
     birthDate: '04-04-1994',
   },
-  token: '000000000000',
+  token: ' ',
 };
 
-const loginResolver: FieldResolver<'Mutation', 'login'> = async () => {
+const loginResolver: FieldResolver<'Mutation', 'login'> = async (_parent, args) => {
+  if (!isPasswordValid(args.data.password) || !isEmailValid(args.data.email)) {
+    throw new InputError(errorsMessages.invalidInput);
+  }
+
+  const user = await AppDataSource.manager.findOneBy(User, { email: args.data.email });
+
+  if (!user) {
+    throw new AuthorizationError(errorsMessages.invalidInput);
+  }
+
+  const password = generateHashPasswordFromSalt(user.salt, args.data.password);
+
+  if (password !== user.password) {
+    throw new AuthorizationError(errorsMessages.invalidInput);
+  }
+
   return mockLoginResult;
 };
 
@@ -41,7 +61,7 @@ export const LoginResponse = objectType({
   name: 'login',
   definition(t) {
     t.field('user', {
-      type: CreateUserResponse,
+      type: UserResponse,
     });
     t.string('token');
   },

@@ -38,17 +38,17 @@ export interface NexusGenScalars {
 }
 
 export interface NexusGenObjects {
-  CreateUserResponse: { // root type
+  Mutation: {};
+  Query: {};
+  UserResponse: { // root type
     birthDate: string; // String!
     email: string; // String!
     id: number; // Int!
     name: string; // String!
   }
-  Mutation: {};
-  Query: {};
   login: { // root type
     token?: string | null; // String
-    user?: NexusGenRootTypes['CreateUserResponse'] | null; // CreateUserResponse
+    user?: NexusGenRootTypes['UserResponse'] | null; // UserResponse
   }
 }
 
@@ -63,42 +63,42 @@ export type NexusGenRootTypes = NexusGenObjects
 export type NexusGenAllTypes = NexusGenRootTypes & NexusGenScalars
 
 export interface NexusGenFieldTypes {
-  CreateUserResponse: { // field return type
-    birthDate: string; // String!
-    email: string; // String!
-    id: number; // Int!
-    name: string; // String!
-  }
   Mutation: { // field return type
-    createUser: NexusGenRootTypes['CreateUserResponse']; // CreateUserResponse!
+    createUser: NexusGenRootTypes['UserResponse']; // UserResponse!
     login: NexusGenRootTypes['login']; // login!
   }
   Query: { // field return type
     hello: string; // String!
   }
+  UserResponse: { // field return type
+    birthDate: string; // String!
+    email: string; // String!
+    id: number; // Int!
+    name: string; // String!
+  }
   login: { // field return type
     token: string | null; // String
-    user: NexusGenRootTypes['CreateUserResponse'] | null; // CreateUserResponse
+    user: NexusGenRootTypes['UserResponse'] | null; // UserResponse
   }
 }
 
 export interface NexusGenFieldTypeNames {
-  CreateUserResponse: { // field return type name
-    birthDate: 'String'
-    email: 'String'
-    id: 'Int'
-    name: 'String'
-  }
   Mutation: { // field return type name
-    createUser: 'CreateUserResponse'
+    createUser: 'UserResponse'
     login: 'login'
   }
   Query: { // field return type name
     hello: 'String'
   }
+  UserResponse: { // field return type name
+    birthDate: 'String'
+    email: 'String'
+    id: 'Int'
+    name: 'String'
+  }
   login: { // field return type name
     token: 'String'
-    user: 'CreateUserResponse'
+    user: 'UserResponse'
   }
 }
 

@@ -2,20 +2,13 @@
 ### Do not make changes to this file directly
 
 
-type CreateUserResponse {
-  birthDate: String!
-  email: String!
-  id: Int!
-  name: String!
-}
-
 input LoginInput {
   email: String!
   password: String!
 }
 
 type Mutation {
-  createUser(data: UserInput!): CreateUserResponse!
+  createUser(data: UserInput!): UserResponse!
   login(data: LoginInput!): login!
 }
 
@@ -30,7 +23,14 @@ input UserInput {
   password: String!
 }
 
+type UserResponse {
+  birthDate: String!
+  email: String!
+  id: Int!
+  name: String!
+}
+
 type login {
   token: String
-  user: CreateUserResponse
+  user: UserResponse
 }
