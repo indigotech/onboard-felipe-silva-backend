@@ -1,7 +1,8 @@
 import { extendType, FieldResolver, inputObjectType, nonNull, objectType } from 'nexus';
 import { AppDataSource } from '../data-source';
 import { User } from '../entity/User';
-import { generateHashPasswordFromSalt, matchString } from '../utils';
+import { InputError } from '../error';
+import { generateHashPasswordFromSalt, isEmailValid, isPasswordValid } from '../utils';
 import { CreateUserResponse } from './user';
 
 const mockLoginResult = {
@@ -17,16 +18,24 @@ const mockLoginResult = {
 const loginResolver: FieldResolver<'Mutation', 'login'> = async (_parent, args) => {
   const user = await AppDataSource.manager.findOneBy(User, { email: args.data.email });
 
+  if (!isPasswordValid(args.data.password)) {
+    throw new InputError(400, 'Invalid Password');
+  }
+
+  if (!isEmailValid(args.data.email)) {
+    throw new InputError(400, 'Invalid Email');
+  }
+
   if (!!user) {
     const password = generateHashPasswordFromSalt(user.salt, args.data.password);
 
-    if (matchString(password, user.password)) {
+    if (password === user.password) {
       return mockLoginResult;
     } else {
-      throw new Error('Invalid password');
+      throw new InputError(400, 'Wrong Password');
     }
   } else {
-    throw new Error('This email has not been registered');
+    throw new InputError(400, 'Email Not Registered');
   }
 };
 
