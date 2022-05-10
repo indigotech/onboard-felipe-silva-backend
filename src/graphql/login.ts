@@ -4,6 +4,7 @@ import { User } from '../entity/User';
 import { errorsMessages, InputError } from '../error';
 import { generateHashPasswordFromSalt, isEmailValid, isPasswordValid } from '../utils';
 import { CreateUserResponse } from './user';
+import { sign } from 'jsonwebtoken';
 
 const mockLoginResult = {
   user: {
