@@ -1,7 +1,7 @@
 import { extendType, FieldResolver, inputObjectType, nonNull, objectType } from 'nexus';
 import { AppDataSource } from '../data-source';
 import { User } from '../entity/User';
-import { InputError } from '../error';
+import { errorsMessages, InputError } from '../error';
 import { generateHashPasswordFromSalt, isEmailValid, isPasswordValid } from '../utils';
 import { CreateUserResponse } from './user';
 
@@ -12,18 +12,18 @@ const mockLoginResult = {
     email: 'test@test.com',
     birthDate: '04-04-1994',
   },
-  token: '',
+  token: ' ',
 };
 
 const loginResolver: FieldResolver<'Mutation', 'login'> = async (_parent, args) => {
   const user = await AppDataSource.manager.findOneBy(User, { email: args.data.email });
 
-  if (!isPasswordValid(args.data.password)) {
-    throw new InputError(400, 'Invalid Password');
+  if (!isEmailValid(args.data.email)) {
+    throw new InputError(400, errorsMessages.invalidEmail);
   }
 
-  if (!isEmailValid(args.data.email)) {
-    throw new InputError(400, 'Invalid Email');
+  if (!isPasswordValid(args.data.password)) {
+    throw new InputError(400, errorsMessages.invalidPassword);
   }
 
   if (!!user) {
@@ -32,10 +32,10 @@ const loginResolver: FieldResolver<'Mutation', 'login'> = async (_parent, args) 
     if (password === user.password) {
       return mockLoginResult;
     } else {
-      throw new InputError(400, 'Wrong Password');
+      throw new InputError(400, errorsMessages.wrongPassword);
     }
   } else {
-    throw new InputError(400, 'Email Not Registered');
+    throw new InputError(400, errorsMessages.wrongEmail);
   }
 };
 

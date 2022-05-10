@@ -118,49 +118,15 @@ describe('Create User Mutation', () => {
 
     expect(errors).to.be.deep.eq([weakPasswordError]);
   });
-
-  after(async () => {
-    await AppDataSource.manager.delete(User, { email: correctInputUser.email });
-  });
-
-  it('User Mutation', async () => {
-    const loginCredentials = {
-      email: 'test@test.com',
-      password: '1234',
-    };
-
-    const loginMutation = await axios({
-      url,
-      method: 'post',
-      data: {
-        query: `
-          mutation Login($credentials: LoginInput!) {
-            login(data: $credentials) {
-              user {              
-                id,
-                name,
-                email,
-                birthDate
-              },
-              token
-            }
-          }
-        `,
-        variables: { credentials: loginCredentials },
-      },
-    });
-
-    const resultData = loginMutation.data.data.login;
-
-    expect(!!resultData.token).to.be.true;
-  });
 });
 
 describe('Login Mutation', () => {
-  it('User Mutation', async () => {
+  it('should enable login', async () => {
+    await createUserMutation(url, correctInputUser);
+
     const loginCredentials = {
-      email: 'test@test.com',
-      password: '1234',
+      email: correctInputUser.email,
+      password: correctInputUser.password,
     };
 
     const mutation = await loginMutation(url, loginCredentials);
@@ -168,5 +134,85 @@ describe('Login Mutation', () => {
     const resultData = mutation.data.data.login;
 
     expect(resultData.token).to.not.be.empty;
+  });
+
+  it('should return invalid password error', async () => {
+    const userCredentials = {
+      email: correctInputUser.email,
+      password: '1234',
+    };
+
+    const mutation = await loginMutation(url, userCredentials);
+
+    const errors = mutation.data.errors;
+
+    const invalidPasswordError = {
+      message: errorsMessages.invalidPassword,
+      code: 400,
+      additionalInfo: null,
+    };
+
+    expect(errors).to.be.deep.eq([invalidPasswordError]);
+  });
+
+  it('should return invalid email error', async () => {
+    const userCredentials = {
+      email: 'aaaaaaa',
+      password: '1234768Aaa',
+    };
+
+    const mutation = await loginMutation(url, userCredentials);
+
+    const errors = mutation.data.errors;
+
+    const invalidEmailError = {
+      message: errorsMessages.invalidEmail,
+      code: 400,
+      additionalInfo: null,
+    };
+
+    expect(errors).to.be.deep.eq([invalidEmailError]);
+  });
+
+  it('should return non registered email error', async () => {
+    const userCredentials = {
+      email: 'emailemail@email.com',
+      password: '1234568asA',
+    };
+
+    const mutation = await loginMutation(url, userCredentials);
+
+    const errors = mutation.data.errors;
+
+    const emailNotRegisteredError = {
+      message: errorsMessages.wrongEmail,
+      code: 400,
+      additionalInfo: null,
+    };
+
+    expect(errors).to.be.deep.eq([emailNotRegisteredError]);
+  });
+
+  it('should return wrong password error', async () => {
+    const userCredentials = {
+      email: correctInputUser.email,
+      password: '1234568asAsd',
+    };
+
+    const mutation = await loginMutation(url, userCredentials);
+
+    const errors = mutation.data.errors;
+
+    const wrongPasswordError = {
+      message: errorsMessages.wrongPassword,
+      code: 400,
+      additionalInfo: null,
+    };
+
+    expect(errors).to.be.deep.eq([wrongPasswordError]);
+  });
+
+  after(async () => {
+    await AppDataSource.manager.delete(User, { email: correctInputUser.email });
   });
 });
