@@ -4,6 +4,7 @@ import { AppDataSource, server } from '../src/data-source';
 import { User } from '../src/entity/User';
 import { generateHashPasswordWithSalt } from '../src/utils';
 import { errorsMessages } from '../src/error';
+import { createUserMutation, loginMutation } from './utils';
 
 const port = process.env.APOLLO_PORT;
 
@@ -39,17 +40,6 @@ mutation CreateUser($credentials: UserInput!) {
 }
 `;
 
-const createUseMutation = async (credentials: UserInput) => {
-  return axios({
-    url,
-    method: 'post',
-    data: {
-      query,
-      variables: { credentials },
-    },
-  });
-};
-
 let url: string;
 const initialSetup = async () => {
   await AppDataSource.initialize().then((data) => console.log(`Database Initialized: ${data.isInitialized}`));
@@ -82,7 +72,7 @@ describe('Queries Test', () => {
 
 describe('Mutation Test', () => {
   it('shoud create user successfully', async () => {
-    const createUseMutation = await axios({
+    const createUserMutation = await axios({
       url,
       method: 'post',
       data: {
@@ -91,7 +81,7 @@ describe('Mutation Test', () => {
       },
     });
 
-    const { id, ...userResponseFields } = createUseMutation.data.data.createUser;
+    const { id, ...userResponseFields } = createUserMutation.data.data.createUser;
 
     expect(userResponseFields).to.be.deep.eq({
       email: correctInputUser.email,
@@ -116,7 +106,7 @@ describe('Mutation Test', () => {
   });
 
   it('should return email already exists error', async () => {
-    const mutation = await createUseMutation(correctInputUser);
+    const mutation = await createUserMutation(url, correctInputUser);
 
     const emailError = {
       message: errorsMessages.existingEmail,
@@ -130,7 +120,7 @@ describe('Mutation Test', () => {
   });
 
   it('should return weak password error', async () => {
-    const mutation = await createUseMutation(weakPasswordUser);
+    const mutation = await createUserMutation(url, weakPasswordUser);
 
     const weakPasswordError = {
       code: 400,
@@ -142,12 +132,11 @@ describe('Mutation Test', () => {
 
     expect(errors).to.be.deep.eq([weakPasswordError]);
   });
-
-  after(async () => {
-    await AppDataSource.manager.delete(User, { email: correctInputUser.email });
-  });
 });
 
+after(async () => {
+  await AppDataSource.manager.delete(User, { email: correctInputUser.email });
+});
 describe('Login Mutation', () => {
   it('User Mutation', async () => {
     const loginCredentials = {
@@ -155,28 +144,9 @@ describe('Login Mutation', () => {
       password: '1234',
     };
 
-    const loginMutation = await axios({
-      url,
-      method: 'post',
-      data: {
-        query: `
-          mutation Login($credentials: LoginInput!) {
-            login(data: $credentials) {
-              user {              
-                id,
-                name,
-                email,
-                birthDate
-              },
-              token
-            }
-          }
-        `,
-        variables: { credentials: loginCredentials },
-      },
-    });
+    const mutation = await loginMutation(url, loginCredentials);
 
-    const resultData = loginMutation.data.data.login;
+    const resultData = mutation.data.data.login;
 
     expect(resultData.token).to.not.be.empty;
   });
