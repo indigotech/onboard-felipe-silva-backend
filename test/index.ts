@@ -4,7 +4,7 @@ import { schema } from '../src/schema';
 import { expect } from 'chai';
 import { AppDataSource, server } from '../src/data-source';
 import { User } from '../src/entity/User';
-import { generateHashPasswordFromSalt } from '../src/utils';
+import { generateHashPasswordWithSalt } from '../src/utils';
 import { GraphQLError } from 'graphql';
 import { errorsMessages, isInputError } from '../src/error';
 
@@ -108,7 +108,7 @@ describe('Mutation Test', () => {
 
     expect(Number.isInteger(testUserFromDatabase.id)).to.be.true;
 
-    const testUserHashedPasword = generateHashPasswordFromSalt(testUserFromDatabase.salt, correctInputUser.password);
+    const testUserHashedPasword = generateHashPasswordWithSalt(testUserFromDatabase.salt, correctInputUser.password);
     delete testUserFromDatabase.salt;
 
     expect(testUserFromDatabase).to.be.deep.eq({
