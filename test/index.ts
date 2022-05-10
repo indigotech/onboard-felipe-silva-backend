@@ -5,6 +5,7 @@ import { User } from '../src/entity/User';
 import { generateHashPasswordFromSalt } from '../src/utils';
 import { errorsMessages } from '../src/error';
 import { createUserMutation, loginMutation } from './utils';
+import { JwtPayload, verify } from 'jsonwebtoken';
 
 const port = process.env.APOLLO_PORT;
 
@@ -145,17 +146,33 @@ describe('Login Mutation', () => {
       password: correctInputUser.password,
     };
 
-    const mutation = await loginMutation(url, loginCredentials);
+    const mutationWithRememberOn = await loginMutation(url, { ...loginCredentials, rememberMe: true });
 
-    const resultData = mutation.data.data.login;
+    const rememberLoginData = mutationWithRememberOn.data.data.login;
 
-    expect(resultData.token).to.not.be.empty;
+    expect(rememberLoginData.token).to.not.be.empty;
+
+    const rememberToken = verify(rememberLoginData.token, 'supersecret') as JwtPayload;
+
+    const mutationWithRememberOff = await loginMutation(url, { ...loginCredentials, rememberMe: false });
+
+    const normalLoginData = mutationWithRememberOff.data.data.login;
+
+    expect(normalLoginData.token).to.not.be.empty;
+
+    const normalToken = verify(normalLoginData.token, 'supersecret') as JwtPayload;
+
+    const expirationWithoutRemember = normalToken.exp - normalToken.iat;
+    const expirationWithRememeber = rememberToken.exp - rememberToken.iat;
+
+    expect(expirationWithRememeber > expirationWithoutRemember).to.be.true;
   });
 
   it('should return invalid password error', async () => {
     const userCredentials = {
       email: correctInputUser.email,
       password: '1234',
+      rememberMe: true,
     };
 
     const mutation = await loginMutation(url, userCredentials);
@@ -169,6 +186,7 @@ describe('Login Mutation', () => {
     const userCredentials = {
       email: 'aaaaaaa',
       password: '1234768Aaa',
+      rememberMe: true,
     };
 
     const mutation = await loginMutation(url, userCredentials);
@@ -182,6 +200,7 @@ describe('Login Mutation', () => {
     const userCredentials = {
       email: 'emailemail@email.com',
       password: '1234568asA',
+      rememberMe: true,
     };
 
     const mutation = await loginMutation(url, userCredentials);
@@ -195,6 +214,7 @@ describe('Login Mutation', () => {
     const userCredentials = {
       email: correctInputUser.email,
       password: '1234568asAsd',
+      rememberMe: true,
     };
 
     const mutation = await loginMutation(url, userCredentials);
