@@ -143,6 +143,12 @@ describe('Mutation Test', () => {
     expect(errors).to.be.deep.eq([weakPasswordError]);
   });
 
+  after(async () => {
+    await AppDataSource.manager.delete(User, { email: correctInputUser.email });
+  });
+});
+
+describe('Login Mutation', () => {
   it('User Mutation', async () => {
     const loginCredentials = {
       email: 'test@test.com',
@@ -172,10 +178,6 @@ describe('Mutation Test', () => {
 
     const resultData = loginMutation.data.data.login;
 
-    expect(!!resultData.token).to.be.true;
+    expect(resultData.token).to.not.be.empty;
   });
-});
-
-after(async () => {
-  await AppDataSource.manager.delete(User, { email: correctInputUser.email });
 });
