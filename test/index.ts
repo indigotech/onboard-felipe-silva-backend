@@ -1,12 +1,9 @@
-import axios, { AxiosResponse } from 'axios';
-import { ApolloError, ApolloServer } from 'apollo-server';
-import { schema } from '../src/schema';
+import axios from 'axios';
 import { expect } from 'chai';
 import { AppDataSource, server } from '../src/data-source';
 import { User } from '../src/entity/User';
 import { generateHashPasswordWithSalt } from '../src/utils';
-import { GraphQLError } from 'graphql';
-import { errorsMessages, isInputError } from '../src/error';
+import { errorsMessages } from '../src/error';
 
 const port = process.env.APOLLO_PORT;
 
