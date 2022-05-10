@@ -12,6 +12,7 @@ type CreateUserResponse {
 input LoginInput {
   email: String!
   password: String!
+  rememberMe: Boolean!
 }
 
 type Mutation {
