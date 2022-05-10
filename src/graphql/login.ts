@@ -6,14 +6,9 @@ import { generateHashPasswordFromSalt, isEmailValid, isPasswordValid } from '../
 import { CreateUserResponse } from './user';
 import { sign } from 'jsonwebtoken';
 
-const mockLoginResult = {
-  user: {
-    name: 'Mock',
-    id: 0,
-    email: 'test@test.com',
-    birthDate: '04-04-1994',
-  },
-  token: ' ',
+const generateToken = (email: string) => {
+  const token = sign({ email: email }, 'supersecret', { expiresIn: '1h' });
+  return token;
 };
 
 const loginResolver: FieldResolver<'Mutation', 'login'> = async (_parent, args) => {
@@ -33,7 +28,9 @@ const loginResolver: FieldResolver<'Mutation', 'login'> = async (_parent, args) 
     throw new InputError(401, errorsMessages.invalidInput);
   }
 
-  return mockLoginResult;
+  const token = generateToken(user.email);
+
+  return { user, token };
 };
 
 export const Login = extendType({
