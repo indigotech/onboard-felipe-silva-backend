@@ -1,9 +1,9 @@
 import axios from 'axios';
 import { expect } from 'chai';
 import { AppDataSource, server } from '../src/data-source';
-import { generateHashPasswordWithSalt } from '../src/utils';
 import { errorsMessages } from '../src/error';
 import { User } from '../src/entity/User';
+import { generateHashPasswordWithSalt } from '../src/utils';
 
 interface UserInput {
   name: string;
@@ -166,5 +166,18 @@ describe('Mutation Test', () => {
     const errors = mutation.data.errors;
 
     expect(errors).to.be.deep.eq([weakPasswordError]);
+  });
+
+  it('Is user included in database?', async () => {
+    const testUserFromDatabase = await AppDataSource.manager.findOneBy(User, { email: testUser.email });
+
+    const testUserHashedPasword = generateHashPasswordWithSalt(testUserFromDatabase.salt, testUser.password);
+    delete testUserFromDatabase.id;
+    delete testUserFromDatabase.salt;
+
+    expect(testUserFromDatabase).to.be.deep.eq({
+      ...testUser,
+      password: testUserHashedPasword,
+    });
   });
 });
