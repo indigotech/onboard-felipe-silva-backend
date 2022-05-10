@@ -16,27 +16,23 @@ const mockLoginResult = {
 };
 
 const loginResolver: FieldResolver<'Mutation', 'login'> = async (_parent, args) => {
+  if (!isPasswordValid(args.data.password) || !isEmailValid(args.data.email)) {
+    throw new InputError(400, errorsMessages.invalidInput);
+  }
+
   const user = await AppDataSource.manager.findOneBy(User, { email: args.data.email });
 
-  if (!isEmailValid(args.data.email)) {
-    throw new InputError(400, errorsMessages.invalidEmail);
+  if (!user) {
+    throw new InputError(401, errorsMessages.invalidInput);
   }
 
-  if (!isPasswordValid(args.data.password)) {
-    throw new InputError(400, errorsMessages.invalidPassword);
+  const password = generateHashPasswordFromSalt(user.salt, args.data.password);
+
+  if (password !== user.password) {
+    throw new InputError(401, errorsMessages.invalidInput);
   }
 
-  if (!!user) {
-    const password = generateHashPasswordFromSalt(user.salt, args.data.password);
-
-    if (password === user.password) {
-      return mockLoginResult;
-    } else {
-      throw new InputError(400, errorsMessages.wrongPassword);
-    }
-  } else {
-    throw new InputError(400, errorsMessages.wrongEmail);
-  }
+  return mockLoginResult;
 };
 
 export const Login = extendType({

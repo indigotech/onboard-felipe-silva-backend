@@ -121,6 +121,22 @@ describe('Create User Mutation', () => {
 });
 
 describe('Login Mutation', () => {
+  const invalidInputError = {
+    message: errorsMessages.invalidInput,
+    code: 400,
+    additionalInfo: null,
+  };
+
+  const unauthorizedError = {
+    message: errorsMessages.invalidInput,
+    code: 401,
+    additionalInfo: null,
+  };
+
+  after(async () => {
+    await AppDataSource.manager.delete(User, { email: correctInputUser.email });
+  });
+
   it('should enable login', async () => {
     await createUserMutation(url, correctInputUser);
 
@@ -146,13 +162,7 @@ describe('Login Mutation', () => {
 
     const errors = mutation.data.errors;
 
-    const invalidPasswordError = {
-      message: errorsMessages.invalidPassword,
-      code: 400,
-      additionalInfo: null,
-    };
-
-    expect(errors).to.be.deep.eq([invalidPasswordError]);
+    expect(errors).to.be.deep.eq([invalidInputError]);
   });
 
   it('should return invalid email error', async () => {
@@ -165,13 +175,7 @@ describe('Login Mutation', () => {
 
     const errors = mutation.data.errors;
 
-    const invalidEmailError = {
-      message: errorsMessages.invalidEmail,
-      code: 400,
-      additionalInfo: null,
-    };
-
-    expect(errors).to.be.deep.eq([invalidEmailError]);
+    expect(errors).to.be.deep.eq([invalidInputError]);
   });
 
   it('should return non registered email error', async () => {
@@ -184,13 +188,7 @@ describe('Login Mutation', () => {
 
     const errors = mutation.data.errors;
 
-    const emailNotRegisteredError = {
-      message: errorsMessages.wrongEmail,
-      code: 400,
-      additionalInfo: null,
-    };
-
-    expect(errors).to.be.deep.eq([emailNotRegisteredError]);
+    expect(errors).to.be.deep.eq([unauthorizedError]);
   });
 
   it('should return wrong password error', async () => {
@@ -203,16 +201,6 @@ describe('Login Mutation', () => {
 
     const errors = mutation.data.errors;
 
-    const wrongPasswordError = {
-      message: errorsMessages.wrongPassword,
-      code: 400,
-      additionalInfo: null,
-    };
-
-    expect(errors).to.be.deep.eq([wrongPasswordError]);
-  });
-
-  after(async () => {
-    await AppDataSource.manager.delete(User, { email: correctInputUser.email });
+    expect(errors).to.be.deep.eq([unauthorizedError]);
   });
 });
