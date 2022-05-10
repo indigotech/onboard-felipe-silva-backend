@@ -149,11 +149,24 @@ describe('Login Mutation', () => {
       rememberMe: false,
     };
 
+    const loginCredentialsWithRememberMe = {
+      email: correctInputUser.email,
+      password: correctInputUser.password,
+      rememberMe: true,
+    };
+
     const mutation = await loginMutation(url, loginCredentials);
+    const mutationWithRemember = await loginMutation(url, loginCredentialsWithRememberMe);
 
-    const resultData = mutation.data.data.login;
+    const verifiedTokenWithoutRemember = verify(mutation.data.data.login.token, 'supersecret') as JwtPayload;
+    const verifiedTokenWithRemember = verify(mutationWithRemember.data.data.login.token, 'supersecret') as JwtPayload;
 
-    expect(resultData.token).to.not.be.empty;
+    const expirationWithRemember = verifiedTokenWithRemember.exp - verifiedTokenWithRemember.iat;
+    const expirationWithoutRemember = verifiedTokenWithoutRemember.exp - verifiedTokenWithoutRemember.iat;
+
+    expect(mutation.data.data.login).to.not.be.empty;
+    expect(mutationWithRemember.data.data.login).to.not.be.empty;
+    expect(expirationWithRemember > expirationWithoutRemember).to.be.true;
   });
 
   it('should return invalid password error', async () => {
