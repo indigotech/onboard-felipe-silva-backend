@@ -17,6 +17,8 @@ config({
   path: path.resolve(__dirname, `../${env_prefix}.env`),
 });
 
+export const jwtTokenSecret = process.env.TOKEN_KEY;
+
 export const AppDataSource = new DataSource({
   type: 'postgres',
   host: 'localhost',

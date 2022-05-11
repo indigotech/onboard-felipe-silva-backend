@@ -1,7 +1,7 @@
 import { extendType, FieldResolver, inputObjectType, nonNull, objectType, stringArg } from 'nexus';
 import { User } from '../entity/User';
-import { AppDataSource } from '../data-source';
-import { isPasswordValid, generateHash, jwtTokenSecret } from '../utils';
+import { AppDataSource, jwtTokenSecret } from '../data-source';
+import { isPasswordValid, generateHash } from '../utils';
 import { AuthorizationError, errorsMessages, InputError } from '../error';
 import { JwtPayload, verify, VerifyErrors } from 'jsonwebtoken';
 
