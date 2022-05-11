@@ -79,8 +79,19 @@ export const UserResponse = objectType({
   },
 });
 
-const resolveQueryUser: FieldResolver<'Query', 'user'> = async (_parent, args) => {
-  console.log(args);
+const resolveQueryUser: FieldResolver<'Query', 'user'> = async (_parent, args, context) => {
+  const token = context.req.headers.authorization;
+
+  verify(token, jwtTokenSecret, (error: VerifyErrors, decodedToken: JwtPayload) => {
+    if (!!error) {
+      throw new AuthorizationError(errorsMessages.unauthorized);
+    }
+
+    if (decodedToken.exp < Date.now() / 1000) {
+      throw new AuthorizationError(errorsMessages.expired);
+    }
+  });
+
   return { id: 0, name: 'teste', birthDate: 'wow', email: 'ass' };
 };
 
