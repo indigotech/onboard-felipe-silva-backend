@@ -17,6 +17,7 @@ export interface NexusGenInputs {
   LoginInput: { // input type
     email: string; // String!
     password: string; // String!
+    rememberMe?: boolean | null; // Boolean
   }
   UserInput: { // input type
     birthDate: string; // String!

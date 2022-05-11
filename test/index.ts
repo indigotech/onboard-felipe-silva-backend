@@ -5,6 +5,7 @@ import { User } from '../src/entity/User';
 import { generateHashPasswordFromSalt } from '../src/utils';
 import { errorsMessages } from '../src/error';
 import { createUserMutation, loginMutation } from './utils';
+import { JwtPayload, verify } from 'jsonwebtoken';
 
 const port = process.env.APOLLO_PORT;
 
@@ -149,9 +150,27 @@ describe('Login Mutation', () => {
 
     const mutation = await loginMutation(url, loginCredentials);
 
-    const resultData = mutation.data.data.login;
+    expect(mutation.data.data.login.token).to.not.be.empty;
+  });
 
-    expect(resultData.token).to.not.be.empty;
+  it('rememberMe should increase expiration time', async () => {
+    await createUserMutation(url, correctInputUser);
+
+    const loginCredentialsWithRememberMe = {
+      email: correctInputUser.email,
+      password: correctInputUser.password,
+      rememberMe: true,
+    };
+
+    const mutationWithRemember = await loginMutation(url, loginCredentialsWithRememberMe);
+
+    const verifiedTokenWithRemember = verify(mutationWithRemember.data.data.login.token, 'supersecret') as JwtPayload;
+
+    const expirationWithRemember = verifiedTokenWithRemember.exp - verifiedTokenWithRemember.iat;
+
+    const oneDayInSeconds = 24 * 60 * 60;
+
+    expect(expirationWithRemember > oneDayInSeconds).to.be.true;
   });
 
   it('should return invalid password error', async () => {
