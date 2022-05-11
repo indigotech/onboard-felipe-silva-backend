@@ -14,8 +14,8 @@ export interface LoginInput {
 }
 
 const createUserQuery = `
-mutation CreateUser($credentials: UserInput!, $token: String!) {
-  createUser(user: $credentials, token: $token) {
+mutation CreateUser($credentials: UserInput!) {
+  createUser(user: $credentials) {
     id,
     name,
     email,
@@ -28,6 +28,9 @@ export const createUserMutation = async (url: string, credentials: UserInput, to
   return axios({
     url,
     method: 'post',
+    headers: {
+      Authorization: token,
+    },
     data: {
       query: createUserQuery,
       variables: { credentials, token },

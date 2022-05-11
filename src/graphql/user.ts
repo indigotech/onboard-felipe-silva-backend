@@ -5,8 +5,8 @@ import { isPasswordValid, generateHash, jwtTokenSecret } from '../utils';
 import { AuthorizationError, errorsMessages, InputError } from '../error';
 import { JwtPayload, verify, VerifyErrors } from 'jsonwebtoken';
 
-const resolveCreateUser: FieldResolver<'Mutation', 'createUser'> = async (_parent, args) => {
-  const token = args.token;
+const resolveCreateUser: FieldResolver<'Mutation', 'createUser'> = async (_parent, args, context) => {
+  const token = context.req.headers.authorization;
 
   verify(token, jwtTokenSecret, (error: VerifyErrors, decodedToken: JwtPayload) => {
     if (!!error) {
@@ -52,7 +52,6 @@ export const CreateUser = extendType({
       type: UserResponse,
       args: {
         user: nonNull(UserInput),
-        token: nonNull(stringArg()),
       },
 
       resolve: resolveCreateUser,

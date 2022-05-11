@@ -33,6 +33,7 @@ export const AppDataSource = new DataSource({
 
 export const server = new ApolloServer({
   schema,
+  context: ({ req, res }) => ({ req, res }),
   formatError: (error: GraphQLError) => {
     const originalError = error.originalError;
 

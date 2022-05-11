@@ -106,7 +106,6 @@ export interface NexusGenFieldTypeNames {
 export interface NexusGenArgTypes {
   Mutation: {
     createUser: { // args
-      token: string; // String!
       user: NexusGenInputs['UserInput']; // UserInput!
     }
     login: { // args

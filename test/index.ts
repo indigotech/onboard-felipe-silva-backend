@@ -170,7 +170,7 @@ describe('Login Mutation', () => {
 
     const mutationWithRemember = await loginMutation(url, loginCredentialsWithRememberMe);
 
-    const verifiedTokenWithRemember = verify(mutationWithRemember.data.data.login.token, 'supersecret') as JwtPayload;
+    const verifiedTokenWithRemember = verify(mutationWithRemember.data.data.login.token, jwtTokenSecret) as JwtPayload;
 
     const expirationWithRemember = verifiedTokenWithRemember.exp - verifiedTokenWithRemember.iat;
 
