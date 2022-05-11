@@ -5,7 +5,7 @@ import { User } from '../src/entity/User';
 import { generateHashPasswordFromSalt, jwtTokenSecret } from '../src/utils';
 import { errorsMessages } from '../src/error';
 import { createUserMutation, loginMutation, UserInput } from './utils';
-import { JwtPayload, verify } from 'jsonwebtoken';
+import { JwtPayload, sign, verify } from 'jsonwebtoken';
 
 const port = process.env.APOLLO_PORT;
 
@@ -229,5 +229,72 @@ describe('Login Mutation', () => {
     const errors = mutation.data.errors;
 
     expect(errors).to.be.deep.eq([unauthorizedError]);
+  });
+});
+
+describe('test token authorization in create user mutation', () => {
+  let loginToken: string;
+
+  const unauthorizedError = {
+    code: 401,
+    message: errorsMessages.unauthorized,
+    additionalInfo: null,
+  };
+
+  const expiredError = {
+    code: 401,
+    message: errorsMessages.expired,
+    additionalInfo: null,
+  };
+
+  afterEach(async () => {
+    await AppDataSource.manager.delete(User, { email: correctInputUser.email });
+  });
+
+  it('authorized token', async () => {
+    const login = await loginMutation(url, {
+      email: loginUser.email,
+      password: loginUser.password,
+      rememberMe: true,
+    });
+
+    const mutation = await createUserMutation(url, correctInputUser, login.data.data.login.token);
+
+    const { id } = mutation.data.data.createUser;
+
+    expect(id).to.exist;
+  });
+
+  it('invalid token', async () => {
+    const mutation = await createUserMutation(url, correctInputUser, 'aaaaaa');
+
+    const errors = mutation.data.errors;
+
+    expect(errors).to.be.deep.eq([unauthorizedError]);
+  });
+
+  it('invalid secret', async () => {
+    const token = sign({ email: loginUser.email }, 'wrongSecret', { expiresIn: '1w' });
+
+    const mutation = await createUserMutation(url, correctInputUser, token);
+
+    const errors = mutation.data.errors;
+
+    expect(errors).to.be.deep.eq([unauthorizedError]);
+  });
+
+  it('expired token', async () => {
+    const token = sign({ email: loginUser.email }, jwtTokenSecret, { expiresIn: 2 });
+
+    setTimeout(
+      async () => {
+        const mutation = await createUserMutation(url, correctInputUser, token);
+        const errors = mutation.data.errors;
+
+        expect(errors).to.be.deep.eq([expiredError]);
+      },
+
+      3000,
+    );
   });
 });
