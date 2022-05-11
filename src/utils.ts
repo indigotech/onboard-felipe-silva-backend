@@ -24,3 +24,5 @@ export const generateHash = (password: string): { salt: string; hashedPassword: 
 export const generateHashPasswordFromSalt = (salt: string, password: string) => {
   return scryptSync(password, salt, 64).toString('hex');
 };
+
+export const jwtTokenSecret = 'secretKey';

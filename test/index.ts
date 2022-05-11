@@ -2,19 +2,12 @@ import axios from 'axios';
 import { expect } from 'chai';
 import { AppDataSource, server } from '../src/data-source';
 import { User } from '../src/entity/User';
-import { generateHashPasswordFromSalt } from '../src/utils';
+import { generateHashPasswordFromSalt, jwtTokenSecret } from '../src/utils';
 import { errorsMessages } from '../src/error';
-import { createUserMutation, loginMutation } from './utils';
+import { createUserMutation, loginMutation, UserInput } from './utils';
 import { JwtPayload, verify } from 'jsonwebtoken';
 
 const port = process.env.APOLLO_PORT;
-
-interface UserInput {
-  name: string;
-  birthDate: string;
-  email: string;
-  password: string;
-}
 
 const correctInputUser: UserInput = {
   name: 'TestUser3',

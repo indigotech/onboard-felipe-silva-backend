@@ -29,6 +29,7 @@ export const errorsMessages: Record<string, string> = {
   existingEmail: 'This e-mail is already in use.',
   invalidInput: 'Invalid email or password',
   unauthorized: 'Unauthorized',
+  expired: 'Expired Token',
 };
 
 export const isInputError = (error: any): error is InputError => {

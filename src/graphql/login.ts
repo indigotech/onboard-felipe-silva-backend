@@ -3,11 +3,11 @@ import { extendType, FieldResolver, inputObjectType, nonNull, objectType } from 
 import { AppDataSource } from '../data-source';
 import { User } from '../entity/User';
 import { AuthorizationError, errorsMessages, InputError } from '../error';
-import { generateHashPasswordFromSalt, isEmailValid, isPasswordValid } from '../utils';
+import { generateHashPasswordFromSalt, isEmailValid, isPasswordValid, jwtTokenSecret } from '../utils';
 import { UserResponse } from './user';
 
 const generateToken = (email: string, rememberMe: boolean) => {
-  const token = sign({ email: email }, 'supersecret', { expiresIn: rememberMe ? '1w' : '1d' });
+  const token = sign({ email: email }, jwtTokenSecret, { expiresIn: rememberMe ? '1w' : '1d' });
 
   return token;
 };

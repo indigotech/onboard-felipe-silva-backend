@@ -1,20 +1,22 @@
 import { extendType, FieldResolver, inputObjectType, nonNull, objectType, stringArg } from 'nexus';
 import { User } from '../entity/User';
 import { AppDataSource } from '../data-source';
-import { isPasswordValid, generateHash } from '../utils';
+import { isPasswordValid, generateHash, jwtTokenSecret } from '../utils';
 import { AuthorizationError, errorsMessages, InputError } from '../error';
-import { verify } from 'jsonwebtoken';
+import { JwtPayload, verify, VerifyErrors } from 'jsonwebtoken';
 
 const resolveCreateUser: FieldResolver<'Mutation', 'createUser'> = async (_parent, args) => {
   const token = args.token;
 
-  // const verifiedToken = verify(token, 'supersecret', (error) => {
-  //   if (!!error) {
-  //     throw new AuthorizationError(errorsMessages.unauthorized);
-  //   }
-  // });
+  verify(token, jwtTokenSecret, (error: VerifyErrors, decodedToken: JwtPayload) => {
+    if (!!error) {
+      throw new AuthorizationError(errorsMessages.unauthorized);
+    }
 
-  // console.log(verifiedToken);
+    if (decodedToken.exp < Date.now() / 1000) {
+      throw new AuthorizationError(errorsMessages.expired);
+    }
+  });
 
   const { name, email, birthDate, password } = args.user;
 
