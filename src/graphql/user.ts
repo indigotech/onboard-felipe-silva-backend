@@ -92,7 +92,13 @@ const resolveQueryUser: FieldResolver<'Query', 'user'> = async (_parent, args, c
     }
   });
 
-  return { id: 0, name: 'teste', birthDate: 'wow', email: 'ass' };
+  const user = await AppDataSource.manager.findOneBy(User, { id: args.id });
+
+  if (!user) {
+    throw new InputError(errorsMessages.userDoesntExist);
+  }
+
+  return user;
 };
 
 export const QueryUser = extendType({

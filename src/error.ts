@@ -30,6 +30,7 @@ export const errorsMessages: Record<string, string> = {
   invalidInput: 'Invalid email or password',
   unauthorized: 'Unauthorized',
   expired: 'Expired Token',
+  userDoesntExist: 'This user does not exist',
 };
 
 export const isInputError = (error: any): error is InputError => {
