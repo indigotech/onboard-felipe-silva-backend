@@ -8,15 +8,14 @@ import { JwtPayload, verify, VerifyErrors } from 'jsonwebtoken';
 const resolveCreateUser: FieldResolver<'Mutation', 'createUser'> = async (_parent, args, context) => {
   const token = context.req.headers.authorization;
 
-  verify(token, jwtTokenSecret, (error: VerifyErrors, decodedToken: JwtPayload) => {
-    if (!!error) {
-      throw new AuthorizationError(errorsMessages.unauthorized);
-    }
-
+  try {
+    const decodedToken = verify(token, jwtTokenSecret) as JwtPayload;
     if (decodedToken.exp < Date.now() / 1000) {
       throw new AuthorizationError(errorsMessages.expired);
     }
-  });
+  } catch (err) {
+    throw new AuthorizationError(errorsMessages.unauthorized);
+  }
 
   const { name, email, birthDate, password } = args.user;
 
