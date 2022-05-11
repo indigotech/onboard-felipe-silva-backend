@@ -1,6 +1,15 @@
 import { AppDataSource } from './data-source';
 import { User } from './entity/User';
 import { generateHash } from './utils';
+import { faker } from '@faker-js/faker';
+
+const dateFormatter = (date: Date) => {
+  const day = date.getDate();
+  const month = date.getMonth() + 1;
+  const year = date.getFullYear();
+
+  return `${day}-${month}-${year}`;
+};
 
 const addUsersToDb = async (quantity: number) => {
   await AppDataSource.initialize().then((data) => console.log(`Database Initialized: ${data.isInitialized}`));
@@ -12,10 +21,9 @@ const addUsersToDb = async (quantity: number) => {
 
     const { salt, hashedPassword } = generateHash(seedPassword);
 
-    const i = 0;
-    user.name = `SeedUser-${i}`;
-    user.email = `SeedEmail-${i}@mail.com`;
-    user.birthDate = `01-01-1990`;
+    user.name = faker.name.findName();
+    user.email = faker.internet.email();
+    user.birthDate = dateFormatter(faker.date.past());
     user.password = hashedPassword;
     user.salt = salt;
 
@@ -23,6 +31,4 @@ const addUsersToDb = async (quantity: number) => {
   }
 };
 
-(async () => {
-  await addUsersToDb(50);
-})();
+addUsersToDb(50);
