@@ -13,8 +13,8 @@ export interface LoginInput {
 }
 
 const createUserQuery = `
-mutation CreateUser($credentials: UserInput!) {
-  createUser(data: $credentials) {
+mutation CreateUser($credentials: UserInput!, $token: String!) {
+  createUser(user: $credentials, token: $token) {
     id,
     name,
     email,
@@ -29,7 +29,7 @@ export const createUserMutation = async (url: string, credentials: UserInput) =>
     method: 'post',
     data: {
       query: createUserQuery,
-      variables: { credentials },
+      variables: { credentials, token: 'a' },
     },
   });
 };

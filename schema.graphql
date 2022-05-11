@@ -9,7 +9,7 @@ input LoginInput {
 }
 
 type Mutation {
-  createUser(data: UserInput!): UserResponse!
+  createUser(token: String!, user: UserInput!): UserResponse!
   login(data: LoginInput!): login!
 }
 

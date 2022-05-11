@@ -1,11 +1,11 @@
-import { extendType, FieldResolver, inputObjectType, nonNull, objectType } from 'nexus';
+import { extendType, FieldResolver, inputObjectType, nonNull, objectType, stringArg } from 'nexus';
 import { User } from '../entity/User';
 import { AppDataSource } from '../data-source';
 import { isPasswordValid, generateHash } from '../utils';
 import { errorsMessages, InputError } from '../error';
 
 const resolveCreateUser: FieldResolver<'Mutation', 'createUser'> = async (_parent, args) => {
-  const { name, email, birthDate, password } = args.data;
+  const { name, email, birthDate, password } = args.user;
 
   const user = new User();
   const isPasswordStrong: boolean = isPasswordValid(password);
@@ -38,7 +38,8 @@ export const CreateUser = extendType({
     t.nonNull.field('createUser', {
       type: UserResponse,
       args: {
-        data: nonNull(UserInput),
+        user: nonNull(UserInput),
+        token: nonNull(stringArg()),
       },
 
       resolve: resolveCreateUser,
