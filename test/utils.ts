@@ -13,6 +13,13 @@ export interface LoginInput {
   rememberMe?: boolean;
 }
 
+export interface UserResponse {
+  email: string;
+  name: string;
+  id: number;
+  birthDate: string;
+}
+
 const createUserQuery = `
 mutation CreateUser($credentials: UserInput!) {
   createUser(user: $credentials) {
@@ -57,6 +64,29 @@ export const loginMutation = async (url: string, loginCredentials: LoginInput) =
         }
       `,
       variables: { credentials: loginCredentials },
+    },
+  });
+};
+
+export const userQuery = async (url: string, id: number, token: string) => {
+  return axios({
+    url,
+    method: 'post',
+    headers: {
+      Authorization: token,
+    },
+    data: {
+      query: `
+      query Query($userId: Int!) {
+        user(id: $userId) {
+          id
+          name
+          email
+          birthDate
+        }
+      }
+      `,
+      variables: { userId: id },
     },
   });
 };
