@@ -98,7 +98,9 @@ const resolveQueryUser: FieldResolver<'Query', 'user'> = async (_parent, args, c
     throw new InputError(errorsMessages.userDoesntExist);
   }
 
-  return user;
+  const { id, name, birthDate, email } = user;
+
+  return { id, name, birthDate, email };
 };
 
 export const QueryUser = extendType({
