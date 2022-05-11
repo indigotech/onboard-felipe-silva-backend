@@ -10,6 +10,7 @@ export interface UserInput {
 export interface LoginInput {
   email: string;
   password: string;
+  rememberMe?: boolean;
 }
 
 const createUserQuery = `
@@ -23,13 +24,13 @@ mutation CreateUser($credentials: UserInput!, $token: String!) {
 }
 `;
 
-export const createUserMutation = async (url: string, credentials: UserInput) => {
+export const createUserMutation = async (url: string, credentials: UserInput, token: string) => {
   return axios({
     url,
     method: 'post',
     data: {
       query: createUserQuery,
-      variables: { credentials, token: 'a' },
+      variables: { credentials, token },
     },
   });
 };

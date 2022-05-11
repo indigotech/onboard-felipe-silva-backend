@@ -28,6 +28,7 @@ export const errorsMessages: Record<string, string> = {
   weakPassword: 'Weak password. It needs at least 6 characters, one letter and one digit!',
   existingEmail: 'This e-mail is already in use.',
   invalidInput: 'Invalid email or password',
+  unauthorized: 'Unauthorized',
 };
 
 export const isInputError = (error: any): error is InputError => {

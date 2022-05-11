@@ -30,7 +30,16 @@ const weakPasswordUser: UserInput = {
   password: '1234567',
 };
 
+const loginUser: UserInput = {
+  name: 'TestUser3',
+  birthDate: '09-06-1998',
+  email: 'admin@admin.com',
+  password: '1234567a',
+};
+
 let url: string;
+let token: string;
+
 const initialSetup = async () => {
   await AppDataSource.initialize().then((data) => console.log(`Database Initialized: ${data.isInitialized}`));
 
@@ -61,41 +70,52 @@ describe('Queries Test', () => {
 });
 
 describe('Create User Mutation', () => {
-  it('shoud create user successfully', async () => {
-    const mutation = await createUserMutation(url, correctInputUser);
+  before(async () => {
+    const login = await loginMutation(url, {
+      email: loginUser.email,
+      password: loginUser.password,
+      rememberMe: true,
+    });
 
-    const mutationReturn = mutation.data.data.createUser;
+    token = login.data.data.login.token;
+  });
 
-    expect({
-      email: mutationReturn.email,
-      name: mutationReturn.name,
-      birthDate: mutationReturn.birthDate,
-    }).to.be.deep.eq({
+  after(async () => {
+    await AppDataSource.manager.delete(User, { email: correctInputUser.email });
+  });
+
+  it('should create user successfully', async () => {
+    const mutation = await createUserMutation(url, correctInputUser, token);
+
+    const { id, ...userFields } = mutation.data.data.createUser;
+
+    const testUserFromDatabase = await AppDataSource.manager.findOneBy(User, { email: correctInputUser.email });
+
+    const testUserHashedPasword = generateHashPasswordFromSalt(testUserFromDatabase.salt, correctInputUser.password);
+
+    expect(userFields).to.be.deep.eq({
       email: correctInputUser.email,
       name: correctInputUser.name,
       birthDate: correctInputUser.birthDate,
     });
 
-    expect(mutationReturn.id).to.exist;
-    expect(Number.isInteger(mutationReturn.id)).to.be.true;
-    expect(mutationReturn.id > 0).to.be.true;
-
-    const testUserFromDatabase = await AppDataSource.manager.findOneBy(User, { email: correctInputUser.email });
+    expect(id).to.exist;
+    expect(Number.isInteger(id)).to.be.true;
+    expect(id > 0).to.be.true;
 
     expect(Number.isInteger(testUserFromDatabase.id)).to.be.true;
 
-    const testUserHashedPasword = generateHashPasswordFromSalt(testUserFromDatabase.salt, correctInputUser.password);
     delete testUserFromDatabase.salt;
-    delete testUserFromDatabase.id;
 
     expect(testUserFromDatabase).to.be.deep.eq({
       ...correctInputUser,
       password: testUserHashedPasword,
+      id,
     });
   });
 
   it('should return email already exists error', async () => {
-    const mutation = await createUserMutation(url, correctInputUser);
+    const mutation = await createUserMutation(url, correctInputUser, token);
 
     const emailError = {
       message: errorsMessages.existingEmail,
@@ -109,7 +129,7 @@ describe('Create User Mutation', () => {
   });
 
   it('should return weak password error', async () => {
-    const mutation = await createUserMutation(url, weakPasswordUser);
+    const mutation = await createUserMutation(url, weakPasswordUser, token);
 
     const weakPasswordError = {
       code: 400,
@@ -136,29 +156,22 @@ describe('Login Mutation', () => {
     additionalInfo: null,
   };
 
-  after(async () => {
-    await AppDataSource.manager.delete(User, { email: correctInputUser.email });
-  });
+  const loginCredentials = {
+    email: loginUser.email,
+    password: loginUser.password,
+    rememberMe: false,
+  };
 
   it('should enable login', async () => {
-    await createUserMutation(url, correctInputUser);
-
-    const loginCredentials = {
-      email: correctInputUser.email,
-      password: correctInputUser.password,
-    };
-
     const mutation = await loginMutation(url, loginCredentials);
 
     expect(mutation.data.data.login.token).to.not.be.empty;
   });
 
   it('rememberMe should increase expiration time', async () => {
-    await createUserMutation(url, correctInputUser);
-
     const loginCredentialsWithRememberMe = {
-      email: correctInputUser.email,
-      password: correctInputUser.password,
+      email: loginUser.email,
+      password: loginUser.password,
       rememberMe: true,
     };
 
@@ -175,7 +188,7 @@ describe('Login Mutation', () => {
 
   it('should return invalid password error', async () => {
     const userCredentials = {
-      email: correctInputUser.email,
+      email: loginUser.email,
       password: '1234',
     };
 
@@ -214,7 +227,7 @@ describe('Login Mutation', () => {
 
   it('should return wrong password error', async () => {
     const userCredentials = {
-      email: correctInputUser.email,
+      email: loginUser.email,
       password: '1234568asAsd',
     };
 

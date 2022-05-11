@@ -2,9 +2,20 @@ import { extendType, FieldResolver, inputObjectType, nonNull, objectType, string
 import { User } from '../entity/User';
 import { AppDataSource } from '../data-source';
 import { isPasswordValid, generateHash } from '../utils';
-import { errorsMessages, InputError } from '../error';
+import { AuthorizationError, errorsMessages, InputError } from '../error';
+import { verify } from 'jsonwebtoken';
 
 const resolveCreateUser: FieldResolver<'Mutation', 'createUser'> = async (_parent, args) => {
+  const token = args.token;
+
+  // const verifiedToken = verify(token, 'supersecret', (error) => {
+  //   if (!!error) {
+  //     throw new AuthorizationError(errorsMessages.unauthorized);
+  //   }
+  // });
+
+  // console.log(verifiedToken);
+
   const { name, email, birthDate, password } = args.user;
 
   const user = new User();
