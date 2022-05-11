@@ -29,7 +29,7 @@ const loginResolver: FieldResolver<'Mutation', 'login'> = async (_parent, args) 
     throw new AuthorizationError(errorsMessages.invalidInput);
   }
 
-  const token = generateToken(user.email, args.data.rememberMe);
+  const token = generateToken(user.email, !!args.data.rememberMe);
 
   return { user, token };
 };
@@ -53,7 +53,7 @@ export const LoginInput = inputObjectType({
   definition(t) {
     t.nonNull.string('password');
     t.nonNull.string('email');
-    t.nonNull.boolean('rememberMe');
+    t.boolean('rememberMe');
   },
 });
 

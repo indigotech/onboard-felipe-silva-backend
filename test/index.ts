@@ -146,8 +146,15 @@ describe('Login Mutation', () => {
     const loginCredentials = {
       email: correctInputUser.email,
       password: correctInputUser.password,
-      rememberMe: false,
     };
+
+    const mutation = await loginMutation(url, loginCredentials);
+
+    expect(mutation.data.data.login.token).to.not.be.empty;
+  });
+
+  it('rememberMe should increase expiration time', async () => {
+    await createUserMutation(url, correctInputUser);
 
     const loginCredentialsWithRememberMe = {
       email: correctInputUser.email,
@@ -155,25 +162,21 @@ describe('Login Mutation', () => {
       rememberMe: true,
     };
 
-    const mutation = await loginMutation(url, loginCredentials);
     const mutationWithRemember = await loginMutation(url, loginCredentialsWithRememberMe);
 
-    const verifiedTokenWithoutRemember = verify(mutation.data.data.login.token, 'supersecret') as JwtPayload;
     const verifiedTokenWithRemember = verify(mutationWithRemember.data.data.login.token, 'supersecret') as JwtPayload;
 
     const expirationWithRemember = verifiedTokenWithRemember.exp - verifiedTokenWithRemember.iat;
-    const expirationWithoutRemember = verifiedTokenWithoutRemember.exp - verifiedTokenWithoutRemember.iat;
 
-    expect(mutation.data.data.login).to.not.be.empty;
-    expect(mutationWithRemember.data.data.login).to.not.be.empty;
-    expect(expirationWithRemember > expirationWithoutRemember).to.be.true;
+    const oneDayInSeconds = 24 * 60 * 60;
+
+    expect(expirationWithRemember > oneDayInSeconds).to.be.true;
   });
 
   it('should return invalid password error', async () => {
     const userCredentials = {
       email: correctInputUser.email,
       password: '1234',
-      rememberMe: false,
     };
 
     const mutation = await loginMutation(url, userCredentials);
@@ -187,7 +190,6 @@ describe('Login Mutation', () => {
     const userCredentials = {
       email: 'aaaaaaa',
       password: '1234768Aaa',
-      rememberMe: false,
     };
 
     const mutation = await loginMutation(url, userCredentials);
@@ -201,7 +203,6 @@ describe('Login Mutation', () => {
     const userCredentials = {
       email: 'emailemail@email.com',
       password: '1234568asA',
-      rememberMe: false,
     };
 
     const mutation = await loginMutation(url, userCredentials);
@@ -215,7 +216,6 @@ describe('Login Mutation', () => {
     const userCredentials = {
       email: correctInputUser.email,
       password: '1234568asAsd',
-      rememberMe: false,
     };
 
     const mutation = await loginMutation(url, userCredentials);
