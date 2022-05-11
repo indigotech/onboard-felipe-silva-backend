@@ -27,7 +27,11 @@ const addUsersToDb = async (quantity: number) => {
     user.password = hashedPassword;
     user.salt = salt;
 
-    await AppDataSource.manager.save(user);
+    try {
+      await AppDataSource.manager.save(user);
+    } catch (error) {
+      console.log(error);
+    }
   }
 };
 
