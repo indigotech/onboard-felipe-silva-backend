@@ -97,9 +97,7 @@ const resolveQueryUserList: FieldResolver<'Query', 'users'> = async (_parent, ar
     .orderBy('name')
     .getMany();
 
-  const sortedUsers = users.sort((a, b) => a.name.localeCompare(b.name));
-
-  return sortedUsers;
+  return users;
 };
 
 export const QueryUser = extendType({

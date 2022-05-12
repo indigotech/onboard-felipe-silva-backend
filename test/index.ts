@@ -239,7 +239,7 @@ describe('test token errors', () => {
 });
 
 describe('user query', () => {
-  const id = 123;
+  const id = 970;
   const invalidId = 0;
 
   let user: UserResponse;
@@ -284,16 +284,43 @@ describe('user query', () => {
 });
 
 describe('user list query', () => {
-  it('length lower or equal arg quantity', async () => {
+  let databaseUsers: User[];
+  before(async () => {
+    const repository = AppDataSource.getRepository(User);
+
+    databaseUsers = await repository
+      .createQueryBuilder('user')
+      .select(['user.id', 'user.name', 'user.birthDate', 'user.email'])
+      .orderBy('name')
+      .getMany();
+  });
+
+  it('should return list with length lower than/equal input', async () => {
     const quantity = 5;
     const token = sign({ email: loginUser.email }, jwtTokenSecret, { expiresIn: '1d' });
     const query = await userListQuery(url, token, quantity);
 
-    expect(quantity).to.be.lte(query.data.data.users.length);
-    expect(query.data.data.users[0]).to.have.all.keys(['name', 'id', 'birthDate', 'email']);
+    expect(query.data.data.users.length).to.be.lte(quantity);
   });
 
-  it('default quantity parameter equal 10', async () => {
+  it('should return sorted alphabetically', async () => {
+    const quantity = 5;
+    const token = sign({ email: loginUser.email }, jwtTokenSecret, { expiresIn: '1d' });
+    const query = await userListQuery(url, token, quantity);
+
+    expect(databaseUsers[0]).to.be.deep.eq(query.data.data.users[0]);
+  });
+
+  it('should return a valid user list', async () => {
+    const limit = 10;
+
+    const token = sign({ email: loginUser.email }, jwtTokenSecret, { expiresIn: '1d' });
+    const query = await userListQuery(url, token, limit);
+
+    expect(query.data.data.users).to.be.deep.eq(databaseUsers.slice(0, limit));
+  });
+
+  it('should return 10 users if no has limit parameter', async () => {
     const defaultQuantity = 10;
     const token = sign({ email: loginUser.email }, jwtTokenSecret, { expiresIn: '1d' });
     const query = await userListQuery(url, token);
