@@ -4,7 +4,7 @@ import { AppDataSource, server, jwtTokenSecret } from '../src/data-source';
 import { User } from '../src/entity/User';
 import { generateHashPasswordFromSalt } from '../src/utils';
 import { errorsMessages } from '../src/error';
-import { createUserMutation, loginMutation, UserInput } from './utils';
+import { createUserMutation, loginMutation, UserInput, userQuery, UserResponse } from './utils';
 import { JwtPayload, sign, verify } from 'jsonwebtoken';
 
 const port = process.env.APOLLO_PORT;
@@ -235,5 +235,50 @@ describe('test token errors', () => {
     const errors = mutation.data.errors;
 
     expect(errors).to.be.deep.eq([expiredError]);
+  });
+});
+
+describe('user query', () => {
+  const id = 123;
+  const invalidId = 0;
+
+  let user: UserResponse;
+
+  before(async () => {
+    const { password, salt, ...userFields } = await AppDataSource.manager.findOneBy(User, { id });
+
+    user = userFields;
+  });
+
+  const unauthorizedError = {
+    message: errorsMessages.unauthorized,
+    code: 401,
+    additionalInfo: null,
+  };
+
+  const userDoesntExistError = {
+    message: errorsMessages.userDoesntExist,
+    code: 400,
+    additionalInfo: null,
+  };
+
+  it('enable query after login', async () => {
+    const token = sign({ email: loginUser.email }, jwtTokenSecret, { expiresIn: '1d' });
+    const query = await userQuery(url, id, token);
+
+    expect(query.data.data.user).to.be.deep.eq(user);
+  });
+
+  it('return error if query without login', async () => {
+    const query = await userQuery(url, id, '');
+
+    expect(query.data.errors).to.be.deep.eq([unauthorizedError]);
+  });
+
+  it('return error if user does not exist', async () => {
+    const token = sign({ email: loginUser.email }, jwtTokenSecret, { expiresIn: '1d' });
+    const query = await userQuery(url, invalidId, token);
+
+    expect(query.data.errors).to.be.deep.eq([userDoesntExistError]);
   });
 });

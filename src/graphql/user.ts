@@ -1,22 +1,13 @@
-import { extendType, FieldResolver, inputObjectType, nonNull, objectType } from 'nexus';
+import { extendType, FieldResolver, inputObjectType, intArg, nonNull, objectType } from 'nexus';
 import { User } from '../entity/User';
-import { AppDataSource, jwtTokenSecret } from '../data-source';
-import { isPasswordValid, generateHash } from '../utils';
-import { AuthorizationError, errorsMessages, InputError } from '../error';
-import { JsonWebTokenError, JwtPayload, TokenExpiredError, verify } from 'jsonwebtoken';
+import { AppDataSource } from '../data-source';
+import { errorsMessages, InputError } from '../error';
+import { isPasswordValid, generateHash, verifyToken } from '../utils';
 
 const resolveCreateUser: FieldResolver<'Mutation', 'createUser'> = async (_parent, args, context) => {
   const token = context.headers.authorization;
 
-  try {
-    const decodedToken = verify(token, jwtTokenSecret) as JwtPayload;
-  } catch (err) {
-    if (err instanceof TokenExpiredError) {
-      throw new AuthorizationError(errorsMessages.expired);
-    } else if (err instanceof JsonWebTokenError) {
-      throw new AuthorizationError(errorsMessages.unauthorized);
-    }
-  }
+  verifyToken(token);
 
   const { name, email, birthDate, password } = args.user;
 
@@ -76,5 +67,32 @@ export const UserResponse = objectType({
     t.nonNull.string('name');
     t.nonNull.string('email');
     t.nonNull.string('birthDate');
+  },
+});
+
+const resolveQueryUser: FieldResolver<'Query', 'user'> = async (_parent, args, context) => {
+  const token = context.headers.authorization;
+
+  verifyToken(token);
+
+  const user = await AppDataSource.manager.findOneBy(User, { id: args.id });
+
+  if (!user) {
+    throw new InputError(errorsMessages.userDoesntExist);
+  }
+
+  return user;
+};
+
+export const QueryUser = extendType({
+  type: 'Query',
+  definition(t) {
+    t.nonNull.field('user', {
+      type: UserResponse,
+      args: {
+        id: nonNull(intArg()),
+      },
+      resolve: resolveQueryUser,
+    });
   },
 });
