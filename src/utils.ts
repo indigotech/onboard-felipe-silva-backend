@@ -1,7 +1,7 @@
 import faker from '@faker-js/faker';
-import { randomBytes, scrypt, scryptSync } from 'crypto';
+import { randomBytes, scryptSync } from 'crypto';
 import { JsonWebTokenError, JwtPayload, TokenExpiredError, verify } from 'jsonwebtoken';
-import { AppDataSource, jwtTokenSecret } from './data-source';
+import { AppDataSource, jwtTokenSecret, server } from './data-source';
 import { User } from './entity/User';
 import { AuthorizationError, errorsMessages } from './error';
 

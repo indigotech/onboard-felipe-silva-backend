@@ -2,14 +2,6 @@ import 'reflect-metadata';
 import { AppDataSource, server } from './data-source';
 import { User } from './entity/User';
 
-export const initialSetup = async () => {
-  await AppDataSource.initialize().then((data) => console.log(`Database Initialized: ${data.isInitialized}`));
-
-  await server.listen({ port }).then((data) => {
-    console.log(`Apollo Server Initialized: ${data.url}`);
-  });
-};
-
 AppDataSource.initialize()
   .then(async () => {
     console.log('Database Connection Successful');

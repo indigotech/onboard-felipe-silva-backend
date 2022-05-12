@@ -30,6 +30,12 @@ const loginUser: UserInput = {
   password: '1234567a',
 };
 
+const loginCredentials = {
+  email: loginUser.email,
+  password: loginUser.password,
+  rememberMe: false,
+};
+
 let url: string;
 
 const initialSetup = async () => {
@@ -126,18 +132,16 @@ describe('Login Mutation', () => {
     code: 401,
     additionalInfo: null,
   };
-  const loginCredentials = {
-    email: loginUser.email,
-    password: loginUser.password,
-    rememberMe: false,
-  };
 
-  // beforeEach(async() => {
-  //   const token = sign({ email: loginUser.email }, jwtTokenSecret, { expiresIn: '1d' });
+  before(async () => {
+    const token = sign({ email: loginUser.email }, jwtTokenSecret, { expiresIn: '1d' });
 
-  //   await
+    await createUserMutation(url, loginUser, token);
+  });
 
-  // })
+  after(async () => {
+    await AppDataSource.manager.delete(User, { email: loginCredentials.email });
+  });
 
   it('should enable login', async () => {
     const mutation = await loginMutation(url, loginCredentials);
@@ -256,6 +260,10 @@ describe('user query', () => {
     id = mutation.data.data.createUser.id;
     const { password, salt, ...userFields } = await AppDataSource.manager.findOneBy(User, { id });
     user = userFields;
+  });
+
+  after(async () => {
+    await AppDataSource.manager.delete(User, { email: correctInputUser.email });
   });
 
   const unauthorizedError = {
