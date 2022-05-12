@@ -4,7 +4,7 @@ import { AppDataSource, server, jwtTokenSecret } from '../src/data-source';
 import { User } from '../src/entity/User';
 import { generateHashPasswordFromSalt } from '../src/utils';
 import { errorsMessages } from '../src/error';
-import { createUserMutation, loginMutation, UserInput, userQuery, UserResponse } from './utils';
+import { createUserMutation, loginMutation, UserInput, userListQuery, userQuery, UserResponse } from './utils';
 import { JwtPayload, sign, verify } from 'jsonwebtoken';
 
 const port = process.env.APOLLO_PORT;
@@ -280,5 +280,23 @@ describe('user query', () => {
     const query = await userQuery(url, invalidId, token);
 
     expect(query.data.errors).to.be.deep.eq([userDoesntExistError]);
+  });
+
+  describe('user list query', () => {
+    it('length lower or equal arg quantity', async () => {
+      const quantity = 5;
+      const token = sign({ email: loginUser.email }, jwtTokenSecret, { expiresIn: '1d' });
+      const query = await userListQuery(url, token, quantity);
+
+      expect(quantity).to.be.lte(query.data.data.users.length);
+    });
+
+    it('default quantity parameter equal 10', async () => {
+      const defaultQuantity = 10;
+      const token = sign({ email: loginUser.email }, jwtTokenSecret, { expiresIn: '1d' });
+      const query = await userListQuery(url, token);
+
+      expect(defaultQuantity).to.be.eq(query.data.data.users.length);
+    });
   });
 });

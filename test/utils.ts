@@ -90,3 +90,26 @@ export const userQuery = async (url: string, id: number, token: string) => {
     },
   });
 };
+
+export const userListQuery = async (url: string, token: string, quantity?: number) => {
+  return axios({
+    url,
+    method: 'post',
+    headers: {
+      Authorization: token,
+    },
+    data: {
+      query: `
+      query Query($quantity: Int) {
+        users(quantity: $quantity) {
+          id
+          name
+          email
+          birthDate
+        }
+      }
+      `,
+      variables: { quantity },
+    },
+  });
+};
