@@ -1,11 +1,24 @@
 import { extendType, FieldResolver, inputObjectType, nonNull, objectType } from 'nexus';
 import { User } from '../entity/User';
-import { AppDataSource } from '../data-source';
+import { AppDataSource, jwtTokenSecret } from '../data-source';
 import { isPasswordValid, generateHash } from '../utils';
-import { errorsMessages, InputError } from '../error';
+import { AuthorizationError, errorsMessages, InputError } from '../error';
+import { JsonWebTokenError, JwtPayload, TokenExpiredError, verify } from 'jsonwebtoken';
 
-const resolveCreateUser: FieldResolver<'Mutation', 'createUser'> = async (_parent, args) => {
-  const { name, email, birthDate, password } = args.data;
+const resolveCreateUser: FieldResolver<'Mutation', 'createUser'> = async (_parent, args, context) => {
+  const token = context.headers.authorization;
+
+  try {
+    const decodedToken = verify(token, jwtTokenSecret) as JwtPayload;
+  } catch (err) {
+    if (err instanceof TokenExpiredError) {
+      throw new AuthorizationError(errorsMessages.expired);
+    } else if (err instanceof JsonWebTokenError) {
+      throw new AuthorizationError(errorsMessages.unauthorized);
+    }
+  }
+
+  const { name, email, birthDate, password } = args.user;
 
   const user = new User();
   const isPasswordStrong: boolean = isPasswordValid(password);
@@ -38,7 +51,7 @@ export const CreateUser = extendType({
     t.nonNull.field('createUser', {
       type: UserResponse,
       args: {
-        data: nonNull(UserInput),
+        user: nonNull(UserInput),
       },
 
       resolve: resolveCreateUser,
