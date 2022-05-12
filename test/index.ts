@@ -263,14 +263,7 @@ describe('user query', () => {
   };
 
   it('enable query after login', async () => {
-    const login = await loginMutation(url, {
-      email: loginUser.email,
-      password: loginUser.password,
-      rememberMe: true,
-    });
-
-    const token = login.data.data.login.token;
-
+    const token = sign({ email: loginUser.email }, jwtTokenSecret, { expiresIn: '1d' });
     const query = await userQuery(url, id, token);
 
     expect(query.data.data.user).to.be.deep.eq(user);
@@ -283,14 +276,7 @@ describe('user query', () => {
   });
 
   it('return error if user does not exist', async () => {
-    const login = await loginMutation(url, {
-      email: loginUser.email,
-      password: loginUser.password,
-      rememberMe: true,
-    });
-
-    const token = login.data.data.login.token;
-
+    const token = sign({ email: loginUser.email }, jwtTokenSecret, { expiresIn: '1d' });
     const query = await userQuery(url, invalidId, token);
 
     expect(query.data.errors).to.be.deep.eq([userDoesntExistError]);

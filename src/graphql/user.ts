@@ -1,22 +1,13 @@
 import { extendType, FieldResolver, inputObjectType, intArg, nonNull, objectType } from 'nexus';
 import { User } from '../entity/User';
-import { AppDataSource, jwtTokenSecret } from '../data-source';
-import { isPasswordValid, generateHash } from '../utils';
-import { AuthorizationError, errorsMessages, InputError } from '../error';
-import { JsonWebTokenError, JwtPayload, TokenExpiredError, verify } from 'jsonwebtoken';
+import { AppDataSource } from '../data-source';
+import { errorsMessages, InputError } from '../error';
+import { isPasswordValid, generateHash, verifyToken } from '../utils';
 
 const resolveCreateUser: FieldResolver<'Mutation', 'createUser'> = async (_parent, args, context) => {
   const token = context.headers.authorization;
 
-  try {
-    verify(token, jwtTokenSecret) as JwtPayload;
-  } catch (err) {
-    if (err instanceof TokenExpiredError) {
-      throw new AuthorizationError(errorsMessages.expired);
-    } else if (err instanceof JsonWebTokenError) {
-      throw new AuthorizationError(errorsMessages.unauthorized);
-    }
-  }
+  verifyToken(token);
 
   const { name, email, birthDate, password } = args.user;
 
@@ -80,17 +71,9 @@ export const UserResponse = objectType({
 });
 
 const resolveQueryUser: FieldResolver<'Query', 'user'> = async (_parent, args, context) => {
-  const token = context.req.headers.authorization;
+  const token = context.headers.authorization;
 
-  verify(token, jwtTokenSecret, (error: VerifyErrors, decodedToken: JwtPayload) => {
-    if (!!error) {
-      throw new AuthorizationError(errorsMessages.unauthorized);
-    }
-
-    if (decodedToken.exp < Date.now() / 1000) {
-      throw new AuthorizationError(errorsMessages.expired);
-    }
-  });
+  verifyToken(token);
 
   const user = await AppDataSource.manager.findOneBy(User, { id: args.id });
 
@@ -98,9 +81,7 @@ const resolveQueryUser: FieldResolver<'Query', 'user'> = async (_parent, args, c
     throw new InputError(errorsMessages.userDoesntExist);
   }
 
-  const { id, name, birthDate, email } = user;
-
-  return { id, name, birthDate, email };
+  return user;
 };
 
 export const QueryUser = extendType({
