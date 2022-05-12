@@ -281,22 +281,22 @@ describe('user query', () => {
 
     expect(query.data.errors).to.be.deep.eq([userDoesntExistError]);
   });
+});
 
-  describe('user list query', () => {
-    it('length lower or equal arg quantity', async () => {
-      const quantity = 5;
-      const token = sign({ email: loginUser.email }, jwtTokenSecret, { expiresIn: '1d' });
-      const query = await userListQuery(url, token, quantity);
+describe('user list query', () => {
+  it('length lower or equal arg quantity', async () => {
+    const quantity = 5;
+    const token = sign({ email: loginUser.email }, jwtTokenSecret, { expiresIn: '1d' });
+    const query = await userListQuery(url, token, quantity);
 
-      expect(quantity).to.be.lte(query.data.data.users.length);
-    });
+    expect(quantity).to.be.lte(query.data.data.users.length);
+  });
 
-    it('default quantity parameter equal 10', async () => {
-      const defaultQuantity = 10;
-      const token = sign({ email: loginUser.email }, jwtTokenSecret, { expiresIn: '1d' });
-      const query = await userListQuery(url, token);
+  it('default quantity parameter equal 10', async () => {
+    const defaultQuantity = 10;
+    const token = sign({ email: loginUser.email }, jwtTokenSecret, { expiresIn: '1d' });
+    const query = await userListQuery(url, token);
 
-      expect(defaultQuantity).to.be.eq(query.data.data.users.length);
-    });
+    expect(defaultQuantity).to.be.eq(query.data.data.users.length);
   });
 });
