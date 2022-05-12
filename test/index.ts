@@ -290,6 +290,7 @@ describe('user list query', () => {
     const query = await userListQuery(url, token, quantity);
 
     expect(quantity).to.be.lte(query.data.data.users.length);
+    expect(query.data.data.users[0]).to.have.all.keys(['name', 'id', 'birthDate', 'email']);
   });
 
   it('default quantity parameter equal 10', async () => {

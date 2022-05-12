@@ -89,7 +89,13 @@ const resolveQueryUserList: FieldResolver<'Query', 'users'> = async (_parent, ar
 
   verifyToken(token);
 
-  const users = await AppDataSource.manager.find(User, { take: args.quantity ?? 10 });
+  const repository = AppDataSource.getRepository(User);
+
+  const users = await repository
+    .createQueryBuilder('users')
+    .take(args.quantity ?? 10)
+    .orderBy('name')
+    .getMany();
 
   const sortedUsers = users.sort((a, b) => a.name.localeCompare(b.name));
 
