@@ -12,7 +12,8 @@ const dateFormatter = (date: Date) => {
 };
 
 const addUsersToDb = async (quantity: number) => {
-  await AppDataSource.initialize().then((data) => console.log(`Database Initialized: ${data.isInitialized}`));
+  const data = await AppDataSource.initialize();
+  console.log(`Database Initialized: ${data.isInitialized}`);
 
   const seedPassword = '123456a';
 
