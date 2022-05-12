@@ -89,13 +89,11 @@ const resolveQueryUserList: FieldResolver<'Query', 'users'> = async (_parent, ar
 
   verifyToken(token);
 
-  const users = await AppDataSource.manager.find(User, { take: args.quantity });
+  const users = await AppDataSource.manager.find(User, { take: args.quantity ?? 10 });
 
-  if (!users) {
-    throw new InputError(errorsMessages.userDoesntExist);
-  }
+  const sortedUsers = users.sort((a, b) => a.name.localeCompare(b.name));
 
-  return users;
+  return sortedUsers;
 };
 
 export const QueryUser = extendType({
