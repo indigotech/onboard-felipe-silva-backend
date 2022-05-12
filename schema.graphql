@@ -13,10 +13,16 @@ type Mutation {
   login(data: LoginInput!): login!
 }
 
+type Pagination {
+  hasNextPage: Boolean!
+  hasPreviousPage: Boolean!
+  totalQuantity: Int!
+}
+
 type Query {
+  data(offset: Int, quantity: Int): UserListResponse!
   hello: String!
   user(id: Int!): UserResponse!
-  users(quantity: Int): [UserResponse]!
 }
 
 input UserInput {
@@ -24,6 +30,11 @@ input UserInput {
   email: String!
   name: String!
   password: String!
+}
+
+type UserListResponse {
+  pagination: Pagination!
+  users: [UserResponse]!
 }
 
 type UserResponse {

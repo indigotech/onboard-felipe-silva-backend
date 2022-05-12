@@ -40,7 +40,16 @@ export interface NexusGenScalars {
 
 export interface NexusGenObjects {
   Mutation: {};
+  Pagination: { // root type
+    hasNextPage: boolean; // Boolean!
+    hasPreviousPage: boolean; // Boolean!
+    totalQuantity: number; // Int!
+  }
   Query: {};
+  UserListResponse: { // root type
+    pagination: NexusGenRootTypes['Pagination']; // Pagination!
+    users: Array<NexusGenRootTypes['UserResponse'] | null>; // [UserResponse]!
+  }
   UserResponse: { // root type
     birthDate: string; // String!
     email: string; // String!
@@ -68,9 +77,18 @@ export interface NexusGenFieldTypes {
     createUser: NexusGenRootTypes['UserResponse']; // UserResponse!
     login: NexusGenRootTypes['login']; // login!
   }
+  Pagination: { // field return type
+    hasNextPage: boolean; // Boolean!
+    hasPreviousPage: boolean; // Boolean!
+    totalQuantity: number; // Int!
+  }
   Query: { // field return type
+    data: NexusGenRootTypes['UserListResponse']; // UserListResponse!
     hello: string; // String!
     user: NexusGenRootTypes['UserResponse']; // UserResponse!
+  }
+  UserListResponse: { // field return type
+    pagination: NexusGenRootTypes['Pagination']; // Pagination!
     users: Array<NexusGenRootTypes['UserResponse'] | null>; // [UserResponse]!
   }
   UserResponse: { // field return type
@@ -90,9 +108,18 @@ export interface NexusGenFieldTypeNames {
     createUser: 'UserResponse'
     login: 'login'
   }
+  Pagination: { // field return type name
+    hasNextPage: 'Boolean'
+    hasPreviousPage: 'Boolean'
+    totalQuantity: 'Int'
+  }
   Query: { // field return type name
+    data: 'UserListResponse'
     hello: 'String'
     user: 'UserResponse'
+  }
+  UserListResponse: { // field return type name
+    pagination: 'Pagination'
     users: 'UserResponse'
   }
   UserResponse: { // field return type name
@@ -117,11 +144,12 @@ export interface NexusGenArgTypes {
     }
   }
   Query: {
+    data: { // args
+      offset?: number | null; // Int
+      quantity?: number | null; // Int
+    }
     user: { // args
       id: number; // Int!
-    }
-    users: { // args
-      quantity?: number | null; // Int
     }
   }
 }

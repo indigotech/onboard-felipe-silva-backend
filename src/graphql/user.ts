@@ -101,16 +101,24 @@ const resolveQueryUserList: FieldResolver<'Query', 'data'> = async (_parent, arg
   const token = context.headers.authorization;
   verifyToken(token);
 
-  const pageLimit = args.quantity;
-  const skip = args.offset;
+  const pageLimit = args.quantity ?? 10;
+  const skip = args.offset ?? 0;
   const totalUsersQuantity = await AppDataSource.manager.count(User);
-  const users = await AppDataSource.manager.find(User, { skip, take: pageLimit ?? 10 });
-  const sortedUsers = users.sort((a, b) => a.name.localeCompare(b.name));
+  // const users = await AppDataSource.manager.find(User, { skip, take: pageLimit });
+
+  const users = await AppDataSource.createQueryBuilder(User, 'users')
+    .take(pageLimit)
+    .skip(skip)
+    .orderBy('name')
+    .getMany();
 
   const lastUserPosition = skip + pageLimit;
+  const initialUserPosition = skip ?? 0;
+  const hasNextPage = lastUserPosition < totalUsersQuantity;
+  const hasPreviousPage = initialUserPosition !== 0;
   return {
-    users: sortedUsers,
-    pagination: { hasNextPage: false, hasPreviousPage: false, totalQuantity: totalUsersQuantity },
+    users: users,
+    pagination: { hasNextPage, hasPreviousPage, totalQuantity: totalUsersQuantity },
   };
 };
 
