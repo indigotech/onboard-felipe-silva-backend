@@ -89,13 +89,13 @@ const resolveQueryUserList: FieldResolver<'Query', 'users'> = async (_parent, ar
 
   verifyToken(token);
 
-  const user = await AppDataSource.manager.findOneBy(User, { id: args.id });
+  const users = await AppDataSource.manager.find(User, { take: args.quantity });
 
-  if (!user) {
+  if (!users) {
     throw new InputError(errorsMessages.userDoesntExist);
   }
 
-  return [user];
+  return users;
 };
 
 export const QueryUser = extendType({
