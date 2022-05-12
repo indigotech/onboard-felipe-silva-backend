@@ -1,4 +1,4 @@
-import { extendType, FieldResolver, inputObjectType, nonNull, objectType } from 'nexus';
+import { extendType, FieldResolver, inputObjectType, intArg, nonNull, objectType } from 'nexus';
 import { User } from '../entity/User';
 import { AppDataSource, jwtTokenSecret } from '../data-source';
 import { isPasswordValid, generateHash } from '../utils';
@@ -9,7 +9,7 @@ const resolveCreateUser: FieldResolver<'Mutation', 'createUser'> = async (_paren
   const token = context.headers.authorization;
 
   try {
-    const decodedToken = verify(token, jwtTokenSecret) as JwtPayload;
+    verify(token, jwtTokenSecret) as JwtPayload;
   } catch (err) {
     if (err instanceof TokenExpiredError) {
       throw new AuthorizationError(errorsMessages.expired);
@@ -76,5 +76,23 @@ export const UserResponse = objectType({
     t.nonNull.string('name');
     t.nonNull.string('email');
     t.nonNull.string('birthDate');
+  },
+});
+
+const resolveQueryUser: FieldResolver<'Query', 'user'> = async (_parent, args) => {
+  console.log(args);
+  return { id: 0, name: 'teste', birthDate: 'wow', email: 'ass' };
+};
+
+export const QueryUser = extendType({
+  type: 'Query',
+  definition(t) {
+    t.nonNull.field('user', {
+      type: UserResponse,
+      args: {
+        id: nonNull(intArg()),
+      },
+      resolve: resolveQueryUser,
+    });
   },
 });

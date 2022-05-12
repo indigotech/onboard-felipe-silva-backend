@@ -70,6 +70,7 @@ export interface NexusGenFieldTypes {
   }
   Query: { // field return type
     hello: string; // String!
+    user: NexusGenRootTypes['UserResponse']; // UserResponse!
   }
   UserResponse: { // field return type
     birthDate: string; // String!
@@ -90,6 +91,7 @@ export interface NexusGenFieldTypeNames {
   }
   Query: { // field return type name
     hello: 'String'
+    user: 'UserResponse'
   }
   UserResponse: { // field return type name
     birthDate: 'String'
@@ -110,6 +112,11 @@ export interface NexusGenArgTypes {
     }
     login: { // args
       data: NexusGenInputs['LoginInput']; // LoginInput!
+    }
+  }
+  Query: {
+    user: { // args
+      id: number; // Int!
     }
   }
 }
