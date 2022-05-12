@@ -77,9 +77,8 @@ describe('Create User Mutation', () => {
       name: correctInputUser.name,
       birthDate: correctInputUser.birthDate,
     });
-    expect(id).to.exist;
     expect(Number.isInteger(id)).to.be.true;
-    expect(id > 0).to.be.true;
+    expect(id).to.be.gt(0);
     expect(Number.isInteger(testUserFromDatabase.id)).to.be.true;
     delete testUserFromDatabase.salt;
     expect(testUserFromDatabase).to.be.deep.eq({
@@ -198,7 +197,7 @@ describe('Login Mutation', () => {
   });
 });
 
-describe('test token authorization in create user mutation', () => {
+describe('test token errors', () => {
   const unauthorizedError = {
     code: 401,
     message: errorsMessages.unauthorized,
@@ -213,14 +212,6 @@ describe('test token authorization in create user mutation', () => {
 
   afterEach(async () => {
     await AppDataSource.manager.delete(User, { email: correctInputUser.email });
-  });
-
-  it('authorized token', async () => {
-    const token = sign({ email: loginUser.email }, jwtTokenSecret);
-    const mutation = await createUserMutation(url, correctInputUser, token);
-    const { id } = mutation.data.data.createUser;
-
-    expect(id).to.exist;
   });
 
   it('invalid token', async () => {
@@ -239,17 +230,10 @@ describe('test token authorization in create user mutation', () => {
   });
 
   it('expired token', async () => {
-    const token = sign({ email: loginUser.email }, jwtTokenSecret, { expiresIn: 2 });
+    const token = sign({ email: loginUser.email }, jwtTokenSecret, { expiresIn: '1ms' });
+    const mutation = await createUserMutation(url, correctInputUser, token);
+    const errors = mutation.data.errors;
 
-    setTimeout(
-      async () => {
-        const mutation = await createUserMutation(url, correctInputUser, token);
-        const errors = mutation.data.errors;
-
-        expect(errors).to.be.deep.eq([expiredError]);
-      },
-
-      3000,
-    );
+    expect(errors).to.be.deep.eq([expiredError]);
   });
 });

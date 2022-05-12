@@ -17,7 +17,7 @@ config({
   path: path.resolve(__dirname, `../${env_prefix}.env`),
 });
 
-export const jwtTokenSecret = process.env.TOKEN_KEY;
+export const jwtTokenSecret = process.env.TOKEN_SECRET;
 
 export const AppDataSource = new DataSource({
   type: 'postgres',
@@ -35,7 +35,7 @@ export const AppDataSource = new DataSource({
 
 export const server = new ApolloServer({
   schema,
-  context: ({ req, res }) => ({ req, res }),
+  context: ({ req }) => ({ headers: req.headers }),
   formatError: (error: GraphQLError) => {
     const originalError = error.originalError;
 
