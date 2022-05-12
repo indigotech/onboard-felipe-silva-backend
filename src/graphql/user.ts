@@ -84,6 +84,20 @@ const resolveQueryUser: FieldResolver<'Query', 'user'> = async (_parent, args, c
   return user;
 };
 
+const resolveQueryUserList: FieldResolver<'Query', 'users'> = async (_parent, args, context) => {
+  const token = context.headers.authorization;
+
+  verifyToken(token);
+
+  const user = await AppDataSource.manager.findOneBy(User, { id: args.id });
+
+  if (!user) {
+    throw new InputError(errorsMessages.userDoesntExist);
+  }
+
+  return [user];
+};
+
 export const QueryUser = extendType({
   type: 'Query',
   definition(t) {
@@ -93,6 +107,19 @@ export const QueryUser = extendType({
         id: nonNull(intArg()),
       },
       resolve: resolveQueryUser,
+    });
+  },
+});
+
+export const QueryUserList = extendType({
+  type: 'Query',
+  definition(t) {
+    t.nonNull.list.field('users', {
+      type: UserResponse,
+      args: {
+        quantity: intArg(),
+      },
+      resolve: resolveQueryUserList,
     });
   },
 });
