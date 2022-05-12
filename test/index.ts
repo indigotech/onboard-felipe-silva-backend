@@ -331,4 +331,22 @@ describe('user list query', () => {
 
     expect(defaultQuantity).to.be.eq(query.data.data.data.users.length);
   });
+
+  it('previousPage should returns false and true for nextPage', async () => {
+    const token = sign({ email: loginUser.email }, jwtTokenSecret, { expiresIn: '1d' });
+    const query = await userListQuery(url, token, 10, 0);
+
+    expect(query.data.data.data.pagination.hasPreviousPage).to.be.false;
+    expect(query.data.data.data.pagination.hasNextPage).to.be.true;
+  });
+
+  it('false nextPage when reaches at last page', async () => {
+    const totalUsers = 51;
+    const pageLimit = 10;
+    const initialUserFromLastPage = totalUsers - pageLimit;
+    const token = sign({ email: loginUser.email }, jwtTokenSecret, { expiresIn: '1d' });
+    const query = await userListQuery(url, token, pageLimit, initialUserFromLastPage);
+
+    expect(query.data.data.data.pagination.hasNextPage).to.be.false;
+  });
 });
