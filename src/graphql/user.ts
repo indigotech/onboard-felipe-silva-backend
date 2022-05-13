@@ -84,22 +84,6 @@ const resolveQueryUser: FieldResolver<'Query', 'user'> = async (_parent, args, c
   return user;
 };
 
-const resolveQueryUserList: FieldResolver<'Query', 'users'> = async (_parent, args, context) => {
-  const token = context.headers.authorization;
-
-  verifyToken(token);
-
-  const repository = AppDataSource.getRepository(User);
-
-  const users = await repository
-    .createQueryBuilder('users')
-    .take(args.quantity ?? 10)
-    .orderBy('name')
-    .getMany();
-
-  return users;
-};
-
 export const QueryUser = extendType({
   type: 'Query',
   definition(t) {
@@ -113,13 +97,52 @@ export const QueryUser = extendType({
   },
 });
 
-export const QueryUserList = extendType({
-  type: 'Query',
+const resolveQueryUserList: FieldResolver<'Query', 'data'> = async (_parent, args, context) => {
+  const token = context.headers.authorization;
+  verifyToken(token);
+
+  const pageLimit = args.quantity;
+  const skip = args.offset;
+  const totalUsersQuantity = await AppDataSource.manager.count(User);
+  const users = await AppDataSource.manager.find(User, { skip, take: pageLimit ?? 10 });
+  const sortedUsers = users.sort((a, b) => a.name.localeCompare(b.name));
+
+  const lastUserPosition = skip + pageLimit;
+  return {
+    users: sortedUsers,
+    pagination: { hasNextPage: false, hasPreviousPage: false, totalQuantity: totalUsersQuantity },
+  };
+};
+
+export const PaginationResponse = objectType({
+  name: 'Pagination',
+  definition(t) {
+    t.nonNull.boolean('hasNextPage');
+    t.nonNull.boolean('hasPreviousPage');
+    t.nonNull.int('totalQuantity');
+  },
+});
+
+export const UserListResponse = objectType({
+  name: 'UserListResponse',
   definition(t) {
     t.nonNull.list.field('users', {
       type: UserResponse,
+    });
+    t.nonNull.field('pagination', {
+      type: PaginationResponse,
+    });
+  },
+});
+
+export const QueryUserList = extendType({
+  type: 'Query',
+  definition(t) {
+    t.nonNull.field('data', {
+      type: UserListResponse,
       args: {
         quantity: intArg(),
+        offset: intArg(),
       },
       resolve: resolveQueryUserList,
     });
