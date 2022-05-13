@@ -2,7 +2,7 @@ import axios from 'axios';
 import { expect } from 'chai';
 import { AppDataSource, server, jwtTokenSecret } from '../src/data-source';
 import { User } from '../src/entity/User';
-import { generateHashPasswordFromSalt } from '../src/utils';
+import { addUsersToDb, generateHashPasswordFromSalt } from '../src/utils';
 import { errorsMessages } from '../src/error';
 import { createUserMutation, loginMutation, UserInput, userListQuery, userQuery, UserResponse } from './utils';
 import { JwtPayload, sign, verify } from 'jsonwebtoken';
@@ -132,6 +132,13 @@ describe('Login Mutation', () => {
     rememberMe: false,
   };
 
+  // beforeEach(async() => {
+  //   const token = sign({ email: loginUser.email }, jwtTokenSecret, { expiresIn: '1d' });
+
+  //   await
+
+  // })
+
   it('should enable login', async () => {
     const mutation = await loginMutation(url, loginCredentials);
 
@@ -239,14 +246,15 @@ describe('test token errors', () => {
 });
 
 describe('user query', () => {
-  const id = 970;
+  let id: number;
   const invalidId = 0;
-
   let user: UserResponse;
 
   before(async () => {
+    const token = sign({ email: loginUser.email }, jwtTokenSecret, { expiresIn: '1d' });
+    const mutation = await createUserMutation(url, correctInputUser, token);
+    id = mutation.data.data.createUser.id;
     const { password, salt, ...userFields } = await AppDataSource.manager.findOneBy(User, { id });
-
     user = userFields;
   });
 
@@ -285,14 +293,23 @@ describe('user query', () => {
 
 describe('user list query', () => {
   let databaseUsers: User[];
+  let users: User[];
+  let totalUsers: number;
   before(async () => {
     const repository = AppDataSource.getRepository(User);
+    users = await addUsersToDb(50);
 
     databaseUsers = await repository
       .createQueryBuilder('user')
       .select(['user.id', 'user.name', 'user.birthDate', 'user.email'])
       .orderBy('name')
       .getMany();
+
+    totalUsers = databaseUsers.length;
+  });
+
+  after(async () => {
+    await AppDataSource.manager.delete(User, users);
   });
 
   it('should return list with length lower than/equal input', async () => {
@@ -332,7 +349,7 @@ describe('user list query', () => {
     expect(defaultQuantity).to.be.eq(query.data.data.data.users.length);
   });
 
-  it('previousPage should returns false and true for nextPage', async () => {
+  it('should returns false for previousPage and true for nextPage when current page is 0', async () => {
     const token = sign({ email: loginUser.email }, jwtTokenSecret, { expiresIn: '1d' });
     const query = await userListQuery(url, token, 10, 0);
 
@@ -340,8 +357,7 @@ describe('user list query', () => {
     expect(query.data.data.data.pagination.hasNextPage).to.be.true;
   });
 
-  it('false nextPage when reaches at last page', async () => {
-    const totalUsers = 51;
+  it('should return false to nextPage when reaches at last page', async () => {
     const pageLimit = 10;
     const initialUserFromLastPage = totalUsers - pageLimit;
     const token = sign({ email: loginUser.email }, jwtTokenSecret, { expiresIn: '1d' });

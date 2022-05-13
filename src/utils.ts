@@ -1,6 +1,8 @@
+import faker from '@faker-js/faker';
 import { randomBytes, scrypt, scryptSync } from 'crypto';
 import { JsonWebTokenError, JwtPayload, TokenExpiredError, verify } from 'jsonwebtoken';
-import { jwtTokenSecret } from './data-source';
+import { AppDataSource, jwtTokenSecret } from './data-source';
+import { User } from './entity/User';
 import { AuthorizationError, errorsMessages } from './error';
 
 const emailRegex =
@@ -38,4 +40,40 @@ export const verifyToken = (token: string) => {
       throw new AuthorizationError(errorsMessages.unauthorized);
     }
   }
+};
+
+export const dateFormatter = (date: Date) => {
+  const day = date.getDate();
+  const month = date.getMonth() + 1;
+  const year = date.getFullYear();
+
+  return `${day}-${month}-${year}`;
+};
+
+export const addUsersToDb = async (quantity: number): Promise<User[]> => {
+  const seedPassword = '123456a';
+
+  const users = [];
+
+  for (let i = 0; i < quantity; i++) {
+    const user = new User();
+
+    const { salt, hashedPassword } = generateHash(seedPassword);
+
+    user.name = faker.name.findName();
+    user.email = faker.internet.email();
+    user.birthDate = dateFormatter(faker.date.past());
+    user.password = hashedPassword;
+    user.salt = salt;
+
+    try {
+      users.push(user);
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  await AppDataSource.manager.save(users);
+
+  return users;
 };

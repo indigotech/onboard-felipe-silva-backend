@@ -41,8 +41,10 @@ export interface NexusGenScalars {
 export interface NexusGenObjects {
   Mutation: {};
   Pagination: { // root type
+    currentPage: number; // Int!
     hasNextPage: boolean; // Boolean!
     hasPreviousPage: boolean; // Boolean!
+    totalPages: number; // Int!
     totalQuantity: number; // Int!
   }
   Query: {};
@@ -78,8 +80,10 @@ export interface NexusGenFieldTypes {
     login: NexusGenRootTypes['login']; // login!
   }
   Pagination: { // field return type
+    currentPage: number; // Int!
     hasNextPage: boolean; // Boolean!
     hasPreviousPage: boolean; // Boolean!
+    totalPages: number; // Int!
     totalQuantity: number; // Int!
   }
   Query: { // field return type
@@ -109,8 +113,10 @@ export interface NexusGenFieldTypeNames {
     login: 'login'
   }
   Pagination: { // field return type name
+    currentPage: 'Int'
     hasNextPage: 'Boolean'
     hasPreviousPage: 'Boolean'
+    totalPages: 'Int'
     totalQuantity: 'Int'
   }
   Query: { // field return type name

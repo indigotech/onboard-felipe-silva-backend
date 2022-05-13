@@ -105,6 +105,10 @@ const resolveQueryUserList: FieldResolver<'Query', 'data'> = async (_parent, arg
   const skip = args.offset ?? 0;
   const totalUsersQuantity = await AppDataSource.manager.count(User);
 
+  const totalPages = Math.ceil(totalUsersQuantity / pageLimit);
+
+  const currentPage = Math.floor(skip / pageLimit);
+
   const users = await AppDataSource.createQueryBuilder(User, 'users')
     .take(pageLimit)
     .skip(skip)
@@ -117,7 +121,7 @@ const resolveQueryUserList: FieldResolver<'Query', 'data'> = async (_parent, arg
   const hasPreviousPage = initialUserPosition !== 0;
   return {
     users: users,
-    pagination: { hasNextPage, hasPreviousPage, totalQuantity: totalUsersQuantity },
+    pagination: { hasNextPage, hasPreviousPage, totalQuantity: totalUsersQuantity, totalPages, currentPage },
   };
 };
 
@@ -127,6 +131,8 @@ export const PaginationResponse = objectType({
     t.nonNull.boolean('hasNextPage');
     t.nonNull.boolean('hasPreviousPage');
     t.nonNull.int('totalQuantity');
+    t.nonNull.int('currentPage');
+    t.nonNull.int('totalPages');
   },
 });
 
