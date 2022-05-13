@@ -405,18 +405,3 @@ describe('user list query', () => {
     expect(query.data.data.data.pagination.totalQuantity).to.be.eq(totalUsersQuantity);
   });
 });
-
-describe('test address#user relation', () => {
-  let user: User;
-  before(async () => {
-    const repository = AppDataSource.getRepository(User);
-
-    user = await repository.createQueryBuilder('user').getOne();
-  });
-
-  it('should return two address', async () => {
-    const address = await AppDataSource.manager.findBy(Address, { user });
-
-    expect(address.length).to.be.eq(2);
-  });
-});
