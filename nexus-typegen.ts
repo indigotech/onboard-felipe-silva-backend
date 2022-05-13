@@ -39,6 +39,23 @@ export interface NexusGenScalars {
 }
 
 export interface NexusGenObjects {
+  Address: { // root type
+    address: Array<NexusGenRootTypes['AddressResponse'] | null>; // [AddressResponse]!
+    birthDate: string; // String!
+    email: string; // String!
+    id: number; // Int!
+    name: string; // String!
+  }
+  AddressResponse: { // root type
+    city: string; // String!
+    complement?: string | null; // String
+    id: number; // Int!
+    neighborHood: string; // String!
+    postalCode: number; // Int!
+    state: string; // String!
+    street: string; // String!
+    streetNumber: number; // Int!
+  }
   Mutation: {};
   Pagination: { // root type
     currentPage: number; // Int!
@@ -50,17 +67,11 @@ export interface NexusGenObjects {
   Query: {};
   UserListResponse: { // root type
     pagination: NexusGenRootTypes['Pagination']; // Pagination!
-    users: Array<NexusGenRootTypes['UserResponse'] | null>; // [UserResponse]!
-  }
-  UserResponse: { // root type
-    birthDate: string; // String!
-    email: string; // String!
-    id: number; // Int!
-    name: string; // String!
+    users: Array<NexusGenRootTypes['Address'] | null>; // [Address]!
   }
   login: { // root type
     token?: string | null; // String
-    user?: NexusGenRootTypes['UserResponse'] | null; // UserResponse
+    user?: NexusGenRootTypes['Address'] | null; // Address
   }
 }
 
@@ -75,8 +86,25 @@ export type NexusGenRootTypes = NexusGenObjects
 export type NexusGenAllTypes = NexusGenRootTypes & NexusGenScalars
 
 export interface NexusGenFieldTypes {
+  Address: { // field return type
+    address: Array<NexusGenRootTypes['AddressResponse'] | null>; // [AddressResponse]!
+    birthDate: string; // String!
+    email: string; // String!
+    id: number; // Int!
+    name: string; // String!
+  }
+  AddressResponse: { // field return type
+    city: string; // String!
+    complement: string | null; // String
+    id: number; // Int!
+    neighborHood: string; // String!
+    postalCode: number; // Int!
+    state: string; // String!
+    street: string; // String!
+    streetNumber: number; // Int!
+  }
   Mutation: { // field return type
-    createUser: NexusGenRootTypes['UserResponse']; // UserResponse!
+    createUser: NexusGenRootTypes['Address']; // Address!
     login: NexusGenRootTypes['login']; // login!
   }
   Pagination: { // field return type
@@ -89,27 +117,38 @@ export interface NexusGenFieldTypes {
   Query: { // field return type
     data: NexusGenRootTypes['UserListResponse']; // UserListResponse!
     hello: string; // String!
-    user: NexusGenRootTypes['UserResponse']; // UserResponse!
+    user: NexusGenRootTypes['Address']; // Address!
   }
   UserListResponse: { // field return type
     pagination: NexusGenRootTypes['Pagination']; // Pagination!
-    users: Array<NexusGenRootTypes['UserResponse'] | null>; // [UserResponse]!
-  }
-  UserResponse: { // field return type
-    birthDate: string; // String!
-    email: string; // String!
-    id: number; // Int!
-    name: string; // String!
+    users: Array<NexusGenRootTypes['Address'] | null>; // [Address]!
   }
   login: { // field return type
     token: string | null; // String
-    user: NexusGenRootTypes['UserResponse'] | null; // UserResponse
+    user: NexusGenRootTypes['Address'] | null; // Address
   }
 }
 
 export interface NexusGenFieldTypeNames {
+  Address: { // field return type name
+    address: 'AddressResponse'
+    birthDate: 'String'
+    email: 'String'
+    id: 'Int'
+    name: 'String'
+  }
+  AddressResponse: { // field return type name
+    city: 'String'
+    complement: 'String'
+    id: 'Int'
+    neighborHood: 'String'
+    postalCode: 'Int'
+    state: 'String'
+    street: 'String'
+    streetNumber: 'Int'
+  }
   Mutation: { // field return type name
-    createUser: 'UserResponse'
+    createUser: 'Address'
     login: 'login'
   }
   Pagination: { // field return type name
@@ -122,21 +161,15 @@ export interface NexusGenFieldTypeNames {
   Query: { // field return type name
     data: 'UserListResponse'
     hello: 'String'
-    user: 'UserResponse'
+    user: 'Address'
   }
   UserListResponse: { // field return type name
     pagination: 'Pagination'
-    users: 'UserResponse'
-  }
-  UserResponse: { // field return type name
-    birthDate: 'String'
-    email: 'String'
-    id: 'Int'
-    name: 'String'
+    users: 'Address'
   }
   login: { // field return type name
     token: 'String'
-    user: 'UserResponse'
+    user: 'Address'
   }
 }
 

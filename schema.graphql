@@ -2,6 +2,25 @@
 ### Do not make changes to this file directly
 
 
+type Address {
+  address: [AddressResponse]!
+  birthDate: String!
+  email: String!
+  id: Int!
+  name: String!
+}
+
+type AddressResponse {
+  city: String!
+  complement: String
+  id: Int!
+  neighborHood: String!
+  postalCode: Int!
+  state: String!
+  street: String!
+  streetNumber: Int!
+}
+
 input LoginInput {
   email: String!
   password: String!
@@ -9,7 +28,7 @@ input LoginInput {
 }
 
 type Mutation {
-  createUser(user: UserInput!): UserResponse!
+  createUser(user: UserInput!): Address!
   login(data: LoginInput!): login!
 }
 
@@ -24,7 +43,7 @@ type Pagination {
 type Query {
   data(offset: Int, quantity: Int): UserListResponse!
   hello: String!
-  user(id: Int!): UserResponse!
+  user(id: Int!): Address!
 }
 
 input UserInput {
@@ -36,17 +55,10 @@ input UserInput {
 
 type UserListResponse {
   pagination: Pagination!
-  users: [UserResponse]!
-}
-
-type UserResponse {
-  birthDate: String!
-  email: String!
-  id: Int!
-  name: String!
+  users: [Address]!
 }
 
 type login {
   token: String
-  user: UserResponse
+  user: Address
 }
