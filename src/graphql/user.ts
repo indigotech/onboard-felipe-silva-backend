@@ -84,22 +84,6 @@ const resolveQueryUser: FieldResolver<'Query', 'user'> = async (_parent, args, c
   return user;
 };
 
-const resolveQueryUserList: FieldResolver<'Query', 'users'> = async (_parent, args, context) => {
-  const token = context.headers.authorization;
-
-  verifyToken(token);
-
-  const repository = AppDataSource.getRepository(User);
-
-  const users = await repository
-    .createQueryBuilder('users')
-    .take(args.quantity ?? 10)
-    .orderBy('name')
-    .getMany();
-
-  return users;
-};
-
 export const QueryUser = extendType({
   type: 'Query',
   definition(t) {
@@ -113,13 +97,65 @@ export const QueryUser = extendType({
   },
 });
 
-export const QueryUserList = extendType({
-  type: 'Query',
+const resolveQueryUserList: FieldResolver<'Query', 'data'> = async (_parent, args, context) => {
+  const token = context.headers.authorization;
+  verifyToken(token);
+
+  const pageLimit = args.quantity ?? 10;
+  const skip = args.offset ?? 0;
+  const totalUsersQuantity = await AppDataSource.manager.count(User);
+
+  const totalPages = Math.ceil(totalUsersQuantity / pageLimit);
+
+  const currentPage = skip !== 0 ? Math.ceil(skip / pageLimit) : 1;
+
+  const users = await AppDataSource.createQueryBuilder(User, 'users')
+    .take(pageLimit)
+    .skip(skip)
+    .orderBy('name')
+    .getMany();
+
+  const lastUserPosition = skip + pageLimit;
+  const initialUserPosition = skip ?? 0;
+  const hasNextPage = lastUserPosition < totalUsersQuantity;
+  const hasPreviousPage = initialUserPosition !== 0;
+  return {
+    users: users,
+    pagination: { hasNextPage, hasPreviousPage, totalQuantity: totalUsersQuantity, totalPages, currentPage },
+  };
+};
+
+export const PaginationResponse = objectType({
+  name: 'Pagination',
+  definition(t) {
+    t.nonNull.boolean('hasNextPage');
+    t.nonNull.boolean('hasPreviousPage');
+    t.nonNull.int('totalQuantity');
+    t.nonNull.int('currentPage');
+    t.nonNull.int('totalPages');
+  },
+});
+
+export const UserListResponse = objectType({
+  name: 'UserListResponse',
   definition(t) {
     t.nonNull.list.field('users', {
       type: UserResponse,
+    });
+    t.nonNull.field('pagination', {
+      type: PaginationResponse,
+    });
+  },
+});
+
+export const QueryUserList = extendType({
+  type: 'Query',
+  definition(t) {
+    t.nonNull.field('data', {
+      type: UserListResponse,
       args: {
         quantity: intArg(),
+        offset: intArg(),
       },
       resolve: resolveQueryUserList,
     });

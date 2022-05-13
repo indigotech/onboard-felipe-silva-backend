@@ -2,7 +2,7 @@ import axios from 'axios';
 import { expect } from 'chai';
 import { AppDataSource, server, jwtTokenSecret } from '../src/data-source';
 import { User } from '../src/entity/User';
-import { generateHashPasswordFromSalt } from '../src/utils';
+import { addUsersToDb, generateHash, generateHashPasswordFromSalt } from '../src/utils';
 import { errorsMessages } from '../src/error';
 import { createUserMutation, loginMutation, UserInput, userListQuery, userQuery, UserResponse } from './utils';
 import { JwtPayload, sign, verify } from 'jsonwebtoken';
@@ -28,6 +28,12 @@ const loginUser: UserInput = {
   birthDate: '09-06-1998',
   email: 'admin@admin.com',
   password: '1234567a',
+};
+
+const loginCredentials = {
+  email: loginUser.email,
+  password: loginUser.password,
+  rememberMe: false,
 };
 
 let url: string;
@@ -126,11 +132,21 @@ describe('Login Mutation', () => {
     code: 401,
     additionalInfo: null,
   };
-  const loginCredentials = {
-    email: loginUser.email,
-    password: loginUser.password,
-    rememberMe: false,
-  };
+
+  before(async () => {
+    const { salt, hashedPassword } = generateHash(loginUser.password);
+    const user = new User();
+    user.name = loginUser.name;
+    user.email = loginUser.email;
+    user.password = hashedPassword;
+    user.salt = salt;
+    user.birthDate = loginUser.birthDate;
+    await AppDataSource.manager.save(user);
+  });
+
+  after(async () => {
+    await AppDataSource.manager.delete(User, { email: loginCredentials.email });
+  });
 
   it('should enable login', async () => {
     const mutation = await loginMutation(url, loginCredentials);
@@ -239,15 +255,24 @@ describe('test token errors', () => {
 });
 
 describe('user query', () => {
-  const id = 970;
   const invalidId = 0;
-
   let user: UserResponse;
 
   before(async () => {
-    const { password, salt, ...userFields } = await AppDataSource.manager.findOneBy(User, { id });
+    const { salt, hashedPassword } = generateHash(correctInputUser.password);
+    const dbUser = new User();
+    dbUser.name = correctInputUser.name;
+    dbUser.email = correctInputUser.email;
+    dbUser.password = hashedPassword;
+    dbUser.salt = salt;
+    dbUser.birthDate = correctInputUser.birthDate;
+    const userFields = await AppDataSource.manager.save(dbUser);
 
-    user = userFields;
+    user = { id: userFields.id, name: userFields.name, email: userFields.email, birthDate: userFields.birthDate };
+  });
+
+  after(async () => {
+    await AppDataSource.manager.delete(User, { email: correctInputUser.email });
   });
 
   const unauthorizedError = {
@@ -264,13 +289,13 @@ describe('user query', () => {
 
   it('enable query after login', async () => {
     const token = sign({ email: loginUser.email }, jwtTokenSecret, { expiresIn: '1d' });
-    const query = await userQuery(url, id, token);
+    const query = await userQuery(url, user.id, token);
 
     expect(query.data.data.user).to.be.deep.eq(user);
   });
 
   it('return error if query without login', async () => {
-    const query = await userQuery(url, id, '');
+    const query = await userQuery(url, user.id, '');
 
     expect(query.data.errors).to.be.deep.eq([unauthorizedError]);
   });
@@ -285,14 +310,24 @@ describe('user query', () => {
 
 describe('user list query', () => {
   let databaseUsers: User[];
+  let totalUsersQuantity: number;
+  let users: User[];
+
   before(async () => {
     const repository = AppDataSource.getRepository(User);
+    users = await addUsersToDb(50);
 
     databaseUsers = await repository
       .createQueryBuilder('user')
       .select(['user.id', 'user.name', 'user.birthDate', 'user.email'])
       .orderBy('name')
       .getMany();
+
+    totalUsersQuantity = databaseUsers.length;
+  });
+
+  after(async () => {
+    await AppDataSource.manager.delete(User, users);
   });
 
   it('should return list with length lower than/equal input', async () => {
@@ -301,9 +336,9 @@ describe('user list query', () => {
     const query = await userListQuery(url, token, quantity);
 
     if (databaseUsers.length >= 5) {
-      expect(query.data.data.users.length).to.be.eq(quantity);
+      expect(query.data.data.data.users.length).to.be.eq(quantity);
     } else {
-      expect(query.data.data.users.length).to.be.lt(quantity);
+      expect(query.data.data.data.users.length).to.be.lt(quantity);
     }
   });
 
@@ -312,7 +347,7 @@ describe('user list query', () => {
     const token = sign({ email: loginUser.email }, jwtTokenSecret, { expiresIn: '1d' });
     const query = await userListQuery(url, token, quantity);
 
-    expect(databaseUsers[0]).to.be.deep.eq(query.data.data.users[0]);
+    expect(databaseUsers[0]).to.be.deep.eq(query.data.data.data.users[0]);
   });
 
   it('should return a valid user list', async () => {
@@ -321,14 +356,59 @@ describe('user list query', () => {
     const token = sign({ email: loginUser.email }, jwtTokenSecret, { expiresIn: '1d' });
     const query = await userListQuery(url, token, limit);
 
-    expect(query.data.data.users).to.be.deep.eq(databaseUsers.slice(0, limit));
+    expect(query.data.data.data.users).to.be.deep.eq(databaseUsers.slice(0, limit));
   });
 
-  it('should return 10 users if no has limit parameter', async () => {
+  it('should return 10 users if has no limit parameter', async () => {
     const defaultQuantity = 10;
     const token = sign({ email: loginUser.email }, jwtTokenSecret, { expiresIn: '1d' });
     const query = await userListQuery(url, token);
 
-    expect(defaultQuantity).to.be.eq(query.data.data.users.length);
+    expect(defaultQuantity).to.be.eq(query.data.data.data.users.length);
+    expect(query.data.data.data.pagination.totalQuantity).to.be.eq(totalUsersQuantity);
+  });
+
+  it('should returns false for previousPage and true for nextPage when is at FIRST PAGE', async () => {
+    const token = sign({ email: loginUser.email }, jwtTokenSecret, { expiresIn: '1d' });
+    const query = await userListQuery(url, token, 10, 0);
+
+    expect(query.data.data.data.pagination.currentPage).to.be.eq(1);
+    expect(query.data.data.data.pagination.hasPreviousPage).to.be.false;
+    expect(query.data.data.data.pagination.hasNextPage).to.be.true;
+  });
+
+  it('should return false to nextPage when reaches at LAST PAGE', async () => {
+    const pageLimit = 10;
+    const totalPages = Math.ceil(totalUsersQuantity / pageLimit);
+    const initialUserFromLastPage = totalUsersQuantity - pageLimit;
+    const token = sign({ email: loginUser.email }, jwtTokenSecret, { expiresIn: '1d' });
+    const query = await userListQuery(url, token, pageLimit, initialUserFromLastPage);
+
+    expect(query.data.data.data.pagination.hasNextPage).to.be.false;
+    expect(query.data.data.data.pagination.totalQuantity).to.be.eq(totalUsersQuantity);
+    expect(query.data.data.data.pagination.totalPages).to.be.eq(totalPages);
+  });
+
+  it('should return true for both nextPage and previousPage fields (placed at neither initial nor final page)', async () => {
+    const page = 2;
+    const pageLimit = Math.ceil(totalUsersQuantity / 5);
+    const skip = pageLimit * page;
+    const token = sign({ email: loginUser.email }, jwtTokenSecret, { expiresIn: '1d' });
+    const userListResponse = await userListQuery(url, token, pageLimit, skip);
+
+    expect(userListResponse.data.data.data.pagination.hasNextPage).to.be.true;
+    expect(userListResponse.data.data.data.pagination.hasPreviousPage).to.be.true;
+    expect(userListResponse.data.data.data.pagination.totalQuantity).to.be.eq(totalUsersQuantity);
+    expect(userListResponse.data.data.data.pagination.currentPage).to.be.eq(page);
+  });
+
+  it('should return all users in one page, with correct pagination (false for both)', async () => {
+    const pageLimit = totalUsersQuantity;
+    const token = sign({ email: loginUser.email }, jwtTokenSecret, { expiresIn: '1d' });
+    const query = await userListQuery(url, token, pageLimit);
+
+    expect(query.data.data.data.pagination.hasNextPage).to.be.false;
+    expect(query.data.data.data.pagination.hasPreviousPage).to.be.false;
+    expect(query.data.data.data.pagination.totalQuantity).to.be.eq(totalUsersQuantity);
   });
 });

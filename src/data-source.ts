@@ -46,3 +46,13 @@ export const server = new ApolloServer({
     }
   },
 });
+
+export const initialSetup = async () => {
+  const data = await AppDataSource.initialize();
+
+  console.log(`Database Initialized: ${data.isInitialized}`);
+
+  const apolloData = await server.listen({ port: process.env.APOLLO_PORT });
+
+  console.log(`Apollo Server Initialized: ${apolloData.url}`);
+};
