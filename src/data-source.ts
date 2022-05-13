@@ -6,6 +6,7 @@ import { ApolloServer } from 'apollo-server';
 import { GraphQLError } from 'graphql';
 import { isAuthorizationError, isInputError } from './error';
 import { schema } from './schema';
+import { Address } from './entity/Address';
 
 let env_prefix: string = '';
 
@@ -28,7 +29,7 @@ export const AppDataSource = new DataSource({
   database: process.env.POSTGRES_DB,
   synchronize: true,
   logging: false,
-  entities: [User],
+  entities: [User, Address],
   migrations: [],
   subscribers: [],
 });

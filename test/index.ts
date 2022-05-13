@@ -6,6 +6,7 @@ import { addUsersToDb, generateHashPasswordFromSalt } from '../src/utils';
 import { errorsMessages } from '../src/error';
 import { createUserMutation, loginMutation, UserInput, userListQuery, userQuery, UserResponse } from './utils';
 import { JwtPayload, sign, verify } from 'jsonwebtoken';
+import { Address } from '../src/entity/Address';
 
 const port = process.env.APOLLO_PORT;
 
@@ -259,6 +260,7 @@ describe('user query', () => {
     const mutation = await createUserMutation(url, correctInputUser, token);
     id = mutation.data.data.createUser.id;
     const { password, salt, ...userFields } = await AppDataSource.manager.findOneBy(User, { id });
+
     user = userFields;
   });
 
@@ -280,13 +282,13 @@ describe('user query', () => {
 
   it('enable query after login', async () => {
     const token = sign({ email: loginUser.email }, jwtTokenSecret, { expiresIn: '1d' });
-    const query = await userQuery(url, id, token);
+    const query = await userQuery(url, user.id, token);
 
     expect(query.data.data.user).to.be.deep.eq(user);
   });
 
   it('return error if query without login', async () => {
-    const query = await userQuery(url, id, '');
+    const query = await userQuery(url, user.id, '');
 
     expect(query.data.errors).to.be.deep.eq([unauthorizedError]);
   });
