@@ -300,7 +300,11 @@ describe('user list query', () => {
     const token = sign({ email: loginUser.email }, jwtTokenSecret, { expiresIn: '1d' });
     const query = await userListQuery(url, token, quantity);
 
-    expect(query.data.data.users.length).to.be.lte(quantity);
+    if (databaseUsers.length >= 5) {
+      expect(query.data.data.users.length).to.be.eq(quantity);
+    } else {
+      expect(query.data.data.users.length).to.be.lt(quantity);
+    }
   });
 
   it('should return sorted alphabetically', async () => {
