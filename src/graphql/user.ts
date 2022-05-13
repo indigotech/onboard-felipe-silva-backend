@@ -60,6 +60,20 @@ export const UserInput = inputObjectType({
   },
 });
 
+export const AddressResponse = objectType({
+  name: 'AddressResponse',
+  definition(t) {
+    t.nonNull.int('id');
+    t.nonNull.string('postalCode');
+    t.nonNull.string('street');
+    t.nonNull.int('streetNumber');
+    t.string('complement');
+    t.nonNull.string('neighborHood');
+    t.nonNull.string('city');
+    t.nonNull.string('state');
+  },
+});
+
 export const UserResponse = objectType({
   name: 'UserResponse',
   definition(t) {
@@ -67,6 +81,7 @@ export const UserResponse = objectType({
     t.nonNull.string('name');
     t.nonNull.string('email');
     t.nonNull.string('birthDate');
+    t.nonNull.field('address', { type: AddressResponse });
   },
 });
 
