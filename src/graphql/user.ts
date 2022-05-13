@@ -84,6 +84,22 @@ const resolveQueryUser: FieldResolver<'Query', 'user'> = async (_parent, args, c
   return user;
 };
 
+const resolveQueryUserList: FieldResolver<'Query', 'users'> = async (_parent, args, context) => {
+  const token = context.headers.authorization;
+
+  verifyToken(token);
+
+  const repository = AppDataSource.getRepository(User);
+
+  const users = await repository
+    .createQueryBuilder('users')
+    .take(args.quantity ?? 10)
+    .orderBy('name')
+    .getMany();
+
+  return users;
+};
+
 export const QueryUser = extendType({
   type: 'Query',
   definition(t) {
@@ -93,6 +109,19 @@ export const QueryUser = extendType({
         id: nonNull(intArg()),
       },
       resolve: resolveQueryUser,
+    });
+  },
+});
+
+export const QueryUserList = extendType({
+  type: 'Query',
+  definition(t) {
+    t.nonNull.list.field('users', {
+      type: UserResponse,
+      args: {
+        quantity: intArg(),
+      },
+      resolve: resolveQueryUserList,
     });
   },
 });

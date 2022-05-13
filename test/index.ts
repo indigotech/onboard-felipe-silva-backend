@@ -4,7 +4,7 @@ import { AppDataSource, server, jwtTokenSecret } from '../src/data-source';
 import { User } from '../src/entity/User';
 import { generateHashPasswordFromSalt } from '../src/utils';
 import { errorsMessages } from '../src/error';
-import { createUserMutation, loginMutation, UserInput, userQuery, UserResponse } from './utils';
+import { createUserMutation, loginMutation, UserInput, userListQuery, userQuery, UserResponse } from './utils';
 import { JwtPayload, sign, verify } from 'jsonwebtoken';
 
 const port = process.env.APOLLO_PORT;
@@ -239,7 +239,7 @@ describe('test token errors', () => {
 });
 
 describe('user query', () => {
-  const id = 123;
+  const id = 970;
   const invalidId = 0;
 
   let user: UserResponse;
@@ -280,5 +280,55 @@ describe('user query', () => {
     const query = await userQuery(url, invalidId, token);
 
     expect(query.data.errors).to.be.deep.eq([userDoesntExistError]);
+  });
+});
+
+describe('user list query', () => {
+  let databaseUsers: User[];
+  before(async () => {
+    const repository = AppDataSource.getRepository(User);
+
+    databaseUsers = await repository
+      .createQueryBuilder('user')
+      .select(['user.id', 'user.name', 'user.birthDate', 'user.email'])
+      .orderBy('name')
+      .getMany();
+  });
+
+  it('should return list with length lower than/equal input', async () => {
+    const quantity = 5;
+    const token = sign({ email: loginUser.email }, jwtTokenSecret, { expiresIn: '1d' });
+    const query = await userListQuery(url, token, quantity);
+
+    if (databaseUsers.length >= 5) {
+      expect(query.data.data.users.length).to.be.eq(quantity);
+    } else {
+      expect(query.data.data.users.length).to.be.lt(quantity);
+    }
+  });
+
+  it('should return sorted alphabetically', async () => {
+    const quantity = 5;
+    const token = sign({ email: loginUser.email }, jwtTokenSecret, { expiresIn: '1d' });
+    const query = await userListQuery(url, token, quantity);
+
+    expect(databaseUsers[0]).to.be.deep.eq(query.data.data.users[0]);
+  });
+
+  it('should return a valid user list', async () => {
+    const limit = 10;
+
+    const token = sign({ email: loginUser.email }, jwtTokenSecret, { expiresIn: '1d' });
+    const query = await userListQuery(url, token, limit);
+
+    expect(query.data.data.users).to.be.deep.eq(databaseUsers.slice(0, limit));
+  });
+
+  it('should return 10 users if no has limit parameter', async () => {
+    const defaultQuantity = 10;
+    const token = sign({ email: loginUser.email }, jwtTokenSecret, { expiresIn: '1d' });
+    const query = await userListQuery(url, token);
+
+    expect(defaultQuantity).to.be.eq(query.data.data.users.length);
   });
 });

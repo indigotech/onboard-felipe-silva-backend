@@ -16,6 +16,7 @@ type Mutation {
 type Query {
   hello: String!
   user(id: Int!): UserResponse!
+  users(quantity: Int): [UserResponse]!
 }
 
 input UserInput {
