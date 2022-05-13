@@ -42,7 +42,7 @@ export const verifyToken = (token: string) => {
   }
 };
 
-export const dateFormatter = (date: Date) => {
+export const formatDate = (date: Date) => {
   const day = date.getDate();
   const month = date.getMonth() + 1;
   const year = date.getFullYear();
@@ -62,7 +62,7 @@ export const addUsersToDb = (quantity: number): Promise<User[]> => {
 
     user.name = faker.name.findName();
     user.email = faker.internet.email();
-    user.birthDate = dateFormatter(faker.date.past());
+    user.birthDate = formatDate(faker.date.past());
     user.password = hashedPassword;
     user.salt = salt;
 

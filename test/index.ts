@@ -2,7 +2,7 @@ import axios from 'axios';
 import { expect } from 'chai';
 import { AppDataSource, server, jwtTokenSecret } from '../src/data-source';
 import { User } from '../src/entity/User';
-import { addUsersToDb, generateHashPasswordFromSalt } from '../src/utils';
+import { addUsersToDb, generateHash, generateHashPasswordFromSalt } from '../src/utils';
 import { errorsMessages } from '../src/error';
 import { createUserMutation, loginMutation, UserInput, userListQuery, userQuery, UserResponse } from './utils';
 import { JwtPayload, sign, verify } from 'jsonwebtoken';
@@ -134,9 +134,14 @@ describe('Login Mutation', () => {
   };
 
   before(async () => {
-    const token = sign({ email: loginUser.email }, jwtTokenSecret, { expiresIn: '1d' });
-
-    await createUserMutation(url, loginUser, token);
+    const { salt, hashedPassword } = generateHash(loginUser.password);
+    const user = new User();
+    user.name = loginUser.name;
+    user.email = loginUser.email;
+    user.password = hashedPassword;
+    user.salt = salt;
+    user.birthDate = loginUser.birthDate;
+    await AppDataSource.manager.save(user);
   });
 
   after(async () => {
@@ -250,16 +255,20 @@ describe('test token errors', () => {
 });
 
 describe('user query', () => {
-  let id: number;
   const invalidId = 0;
   let user: UserResponse;
 
   before(async () => {
-    const token = sign({ email: loginUser.email }, jwtTokenSecret, { expiresIn: '1d' });
-    const mutation = await createUserMutation(url, correctInputUser, token);
-    id = mutation.data.data.createUser.id;
-    const { password, salt, ...userFields } = await AppDataSource.manager.findOneBy(User, { id });
-    user = userFields;
+    const { salt, hashedPassword } = generateHash(correctInputUser.password);
+    const dbUser = new User();
+    dbUser.name = correctInputUser.name;
+    dbUser.email = correctInputUser.email;
+    dbUser.password = hashedPassword;
+    dbUser.salt = salt;
+    dbUser.birthDate = correctInputUser.birthDate;
+    const userFields = await AppDataSource.manager.save(dbUser);
+
+    user = { id: userFields.id, name: userFields.name, email: userFields.email, birthDate: userFields.birthDate };
   });
 
   after(async () => {
@@ -280,13 +289,13 @@ describe('user query', () => {
 
   it('enable query after login', async () => {
     const token = sign({ email: loginUser.email }, jwtTokenSecret, { expiresIn: '1d' });
-    const query = await userQuery(url, id, token);
+    const query = await userQuery(url, user.id, token);
 
     expect(query.data.data.user).to.be.deep.eq(user);
   });
 
   it('return error if query without login', async () => {
-    const query = await userQuery(url, id, '');
+    const query = await userQuery(url, user.id, '');
 
     expect(query.data.errors).to.be.deep.eq([unauthorizedError]);
   });
@@ -385,12 +394,12 @@ describe('user list query', () => {
     const pageLimit = Math.ceil(totalUsersQuantity / 5);
     const skip = pageLimit * page;
     const token = sign({ email: loginUser.email }, jwtTokenSecret, { expiresIn: '1d' });
-    const query = await userListQuery(url, token, pageLimit, skip);
+    const userListResponse = await userListQuery(url, token, pageLimit, skip);
 
-    expect(query.data.data.data.pagination.hasNextPage).to.be.true;
-    expect(query.data.data.data.pagination.hasPreviousPage).to.be.true;
-    expect(query.data.data.data.pagination.totalQuantity).to.be.eq(totalUsersQuantity);
-    expect(query.data.data.data.pagination.currentPage).to.be.eq(page);
+    expect(userListResponse.data.data.data.pagination.hasNextPage).to.be.true;
+    expect(userListResponse.data.data.data.pagination.hasPreviousPage).to.be.true;
+    expect(userListResponse.data.data.data.pagination.totalQuantity).to.be.eq(totalUsersQuantity);
+    expect(userListResponse.data.data.data.pagination.currentPage).to.be.eq(page);
   });
 
   it('should return all users in one page, with correct pagination (false for both)', async () => {
