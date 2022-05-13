@@ -327,9 +327,9 @@ describe('user list query', () => {
     const query = await userListQuery(url, token, quantity);
 
     if (databaseUsers.length >= 5) {
-      expect(query.data.data.users.length).to.be.eq(quantity);
+      expect(query.data.data.data.users.length).to.be.eq(quantity);
     } else {
-      expect(query.data.data.users.length).to.be.lt(quantity);
+      expect(query.data.data.data.users.length).to.be.lt(quantity);
     }
   });
 
@@ -338,7 +338,7 @@ describe('user list query', () => {
     const token = sign({ email: loginUser.email }, jwtTokenSecret, { expiresIn: '1d' });
     const query = await userListQuery(url, token, quantity);
 
-    expect(databaseUsers[0]).to.be.deep.eq(query.data.data.users[0]);
+    expect(databaseUsers[0]).to.be.deep.eq(query.data.data.data.users[0]);
   });
 
   it('should return a valid user list', async () => {
@@ -347,10 +347,10 @@ describe('user list query', () => {
     const token = sign({ email: loginUser.email }, jwtTokenSecret, { expiresIn: '1d' });
     const query = await userListQuery(url, token, limit);
 
-    expect(query.data.data.users).to.be.deep.eq(databaseUsers.slice(0, limit));
+    expect(query.data.data.data.users).to.be.deep.eq(databaseUsers.slice(0, limit));
   });
 
-  it('should return 10 users if no has limit parameter', async () => {
+  it('should return 10 users if has no limit parameter', async () => {
     const defaultQuantity = 10;
     const token = sign({ email: loginUser.email }, jwtTokenSecret, { expiresIn: '1d' });
     const query = await userListQuery(url, token);
@@ -359,7 +359,7 @@ describe('user list query', () => {
     expect(query.data.data.data.pagination.totalQuantity).to.be.eq(totalUsersQuantity);
   });
 
-  it('should returns false for previousPage and true for nextPage when current page is 1', async () => {
+  it('should returns false for previousPage and true for nextPage when is at FIRST PAGE', async () => {
     const token = sign({ email: loginUser.email }, jwtTokenSecret, { expiresIn: '1d' });
     const query = await userListQuery(url, token, 10, 0);
 
@@ -368,7 +368,7 @@ describe('user list query', () => {
     expect(query.data.data.data.pagination.hasNextPage).to.be.true;
   });
 
-  it('should return false to nextPage when reaches at last page', async () => {
+  it('should return false to nextPage when reaches at LAST PAGE', async () => {
     const pageLimit = 10;
     const totalPages = Math.ceil(totalUsersQuantity / pageLimit);
     const initialUserFromLastPage = totalUsersQuantity - pageLimit;
@@ -380,7 +380,7 @@ describe('user list query', () => {
     expect(query.data.data.data.pagination.totalPages).to.be.eq(totalPages);
   });
 
-  it('should return true in nextPage and previousPage fields (neither initial page nor final)', async () => {
+  it('should return true for both nextPage and previousPage fields (placed at neither initial nor final page)', async () => {
     const page = 2;
     const pageLimit = Math.ceil(totalUsersQuantity / 5);
     const skip = pageLimit * page;
