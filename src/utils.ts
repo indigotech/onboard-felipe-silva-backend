@@ -56,15 +56,23 @@ export const addUsersToDb = (quantity: number): Promise<User[]> => {
 
   const users = [];
 
-  const address = new Address();
-  address.postalCode = 0;
-  address.street = 'street';
-  address.streetNumber = 0;
-  address.complement = 'complement';
-  address.neighborHood = 'neighborHood';
-  address.city = 'sp';
-  address.state = 'sp';
+  const address1 = new Address();
+  address1.postalCode = 1;
+  address1.street = 'street1';
+  address1.streetNumber = 1;
+  address1.complement = 'complement1';
+  address1.neighborHood = 'neighborHood1';
+  address1.city = 'sp1';
+  address1.state = 'sp1';
 
+  const address2 = new Address();
+  address2.postalCode = 2;
+  address2.street = 'street2';
+  address2.streetNumber = 2;
+  address2.complement = 'complement2';
+  address2.neighborHood = 'neighborHood2';
+  address2.city = 'sp2';
+  address2.state = 'sp2';
   for (let i = 0; i < quantity; i++) {
     const user = new User();
 
@@ -75,7 +83,7 @@ export const addUsersToDb = (quantity: number): Promise<User[]> => {
     user.birthDate = dateFormatter(faker.date.past());
     user.password = hashedPassword;
     user.salt = salt;
-    user.address = [address];
+    user.address = [address1, address2];
 
     users.push(user);
   }

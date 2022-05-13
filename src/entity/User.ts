@@ -21,6 +21,6 @@ export class User {
   @Column()
   salt: string;
 
-  @OneToMany(() => Address, (address) => address.user, { cascade: true })
+  @OneToMany(() => Address, (address) => address.user, { cascade: true, onDelete: 'CASCADE' })
   address: Address[];
 }
