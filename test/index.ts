@@ -438,7 +438,7 @@ describe('Address field tests', () => {
     expect(user.address).to.not.be.empty;
   });
 
-  it('should return the correct users list', async () => {
+  it('should return the same user list from DB', async () => {
     const token = sign({ email: loginUser.email }, jwtTokenSecret, { expiresIn: '1d' });
     const query = await userListQuery(url, token, databaseUsers.length);
     const users = query.data.data.data.users;
