@@ -301,6 +301,7 @@ describe('user query', () => {
 
 describe('user list query', () => {
   let databaseUsers: User[];
+
   let users: User[];
   let totalUsers: number;
   before(async () => {
