@@ -2,6 +2,7 @@ import faker from '@faker-js/faker';
 import { randomBytes, scryptSync } from 'crypto';
 import { JsonWebTokenError, JwtPayload, TokenExpiredError, verify } from 'jsonwebtoken';
 import { AppDataSource, jwtTokenSecret, server } from './data-source';
+import { Address } from './entity/Address';
 import { User } from './entity/User';
 import { AuthorizationError, errorsMessages } from './error';
 
@@ -55,6 +56,15 @@ export const addUsersToDb = (quantity: number): Promise<User[]> => {
 
   const users = [];
 
+  const address = new Address();
+  address.postalCode = 0;
+  address.street = 'street';
+  address.streetNumber = 0;
+  address.complement = 'complement';
+  address.neighborHood = 'neighborHood';
+  address.city = 'sp';
+  address.state = 'sp';
+
   for (let i = 0; i < quantity; i++) {
     const user = new User();
 
@@ -65,6 +75,7 @@ export const addUsersToDb = (quantity: number): Promise<User[]> => {
     user.birthDate = dateFormatter(faker.date.past());
     user.password = hashedPassword;
     user.salt = salt;
+    user.address = [address];
 
     users.push(user);
   }
