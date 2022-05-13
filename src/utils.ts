@@ -56,24 +56,25 @@ export const addUsersToDb = (quantity: number): Promise<User[]> => {
 
   const users = [];
 
-  const address1 = new Address();
-  address1.postalCode = 1;
-  address1.street = 'street1';
-  address1.streetNumber = 1;
-  address1.complement = 'complement1';
-  address1.neighborHood = 'neighborHood1';
-  address1.city = 'sp1';
-  address1.state = 'sp1';
-
-  const address2 = new Address();
-  address2.postalCode = 2;
-  address2.street = 'street2';
-  address2.streetNumber = 2;
-  address2.complement = 'complement2';
-  address2.neighborHood = 'neighborHood2';
-  address2.city = 'sp2';
-  address2.state = 'sp2';
   for (let i = 0; i < quantity; i++) {
+    const address1 = new Address();
+    address1.postalCode = 1;
+    address1.street = 'street1';
+    address1.streetNumber = 1;
+    address1.complement = 'complement1';
+    address1.neighborHood = 'neighborHood1';
+    address1.city = 'sp1';
+    address1.state = 'sp1';
+
+    const address2 = new Address();
+    address2.postalCode = 2;
+    address2.street = 'street2';
+    address2.streetNumber = 2;
+    address2.complement = 'complement2';
+    address2.neighborHood = 'neighborHood2';
+    address2.city = 'sp2';
+    address2.state = 'sp2';
+
     const user = new User();
 
     const { salt, hashedPassword } = generateHash(seedPassword);

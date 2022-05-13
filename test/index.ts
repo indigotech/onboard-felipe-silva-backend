@@ -1,12 +1,14 @@
 import axios from 'axios';
-import { expect } from 'chai';
+import { use, expect } from 'chai';
 import { AppDataSource, server, jwtTokenSecret } from '../src/data-source';
 import { User } from '../src/entity/User';
 import { addUsersToDb, generateHashPasswordFromSalt } from '../src/utils';
 import { errorsMessages } from '../src/error';
 import { createUserMutation, loginMutation, UserInput, userListQuery, userQuery, UserResponse } from './utils';
 import { JwtPayload, sign, verify } from 'jsonwebtoken';
-import { Address } from '../src/entity/Address';
+import * as deepEqualInAnyOrder from 'deep-equal-in-any-order';
+
+use(deepEqualInAnyOrder);
 
 const port = process.env.APOLLO_PORT;
 
@@ -259,7 +261,11 @@ describe('user query', () => {
     const token = sign({ email: loginUser.email }, jwtTokenSecret, { expiresIn: '1d' });
     const mutation = await createUserMutation(url, correctInputUser, token);
     id = mutation.data.data.createUser.id;
-    const { password, salt, ...userFields } = await AppDataSource.manager.findOneBy(User, { id });
+    const userFields = await AppDataSource.manager.findOne(User, {
+      where: { id },
+      relations: { address: true },
+      select: ['id', 'name', 'email', 'birthDate', 'address'],
+    });
 
     user = userFields;
   });
@@ -304,23 +310,21 @@ describe('user query', () => {
 describe('user list query', () => {
   let databaseUsers: User[];
   let totalUsersQuantity: number;
-  let users: User[];
 
   before(async () => {
-    const repository = AppDataSource.getRepository(User);
-    users = await addUsersToDb(50);
+    await addUsersToDb(50);
 
-    databaseUsers = await repository
-      .createQueryBuilder('user')
-      .select(['user.id', 'user.name', 'user.birthDate', 'user.email'])
-      .orderBy('name')
-      .getMany();
+    databaseUsers = await AppDataSource.manager.find(User, {
+      order: { name: 'ASC' },
+      relations: { address: true },
+      select: ['id', 'name', 'email', 'birthDate', 'address'],
+    });
 
     totalUsersQuantity = databaseUsers.length;
   });
 
   after(async () => {
-    await AppDataSource.manager.delete(User, users);
+    await AppDataSource.manager.delete(User, databaseUsers);
   });
 
   it('should return list with length lower than/equal input', async () => {
@@ -340,7 +344,7 @@ describe('user list query', () => {
     const token = sign({ email: loginUser.email }, jwtTokenSecret, { expiresIn: '1d' });
     const query = await userListQuery(url, token, quantity);
 
-    expect(databaseUsers[0]).to.be.deep.eq(query.data.data.data.users[0]);
+    expect(databaseUsers[0]).to.be.deep.equalInAnyOrder(query.data.data.data.users[0]);
   });
 
   it('should return a valid user list', async () => {
@@ -349,7 +353,7 @@ describe('user list query', () => {
     const token = sign({ email: loginUser.email }, jwtTokenSecret, { expiresIn: '1d' });
     const query = await userListQuery(url, token, limit);
 
-    expect(query.data.data.data.users).to.be.deep.eq(databaseUsers.slice(0, limit));
+    expect(query.data.data.data.users).to.be.deep.equalInAnyOrder(databaseUsers.slice(0, limit));
   });
 
   it('should return 10 users if has no limit parameter', async () => {
@@ -403,5 +407,42 @@ describe('user list query', () => {
     expect(query.data.data.data.pagination.hasNextPage).to.be.false;
     expect(query.data.data.data.pagination.hasPreviousPage).to.be.false;
     expect(query.data.data.data.pagination.totalQuantity).to.be.eq(totalUsersQuantity);
+  });
+});
+
+describe('Address field tests', () => {
+  let databaseUsers: User[];
+
+  before(async () => {
+    await addUsersToDb(50);
+
+    databaseUsers = await AppDataSource.manager.find(User, {
+      relations: { address: true },
+      select: ['id', 'name', 'email', 'birthDate', 'address'],
+      order: { name: 'ASC' },
+    });
+  });
+
+  after(async () => {
+    await AppDataSource.manager.delete(User, databaseUsers);
+  });
+
+  it('should return the user from DB with address field', async () => {
+    const token = sign({ email: loginUser.email }, jwtTokenSecret, { expiresIn: '1d' });
+    const randomIndex = Math.floor(Math.random() * databaseUsers.length);
+    const randomDatabaseUser = databaseUsers[randomIndex];
+    const query = await userQuery(url, randomDatabaseUser.id, token);
+    const user = query.data.data.user;
+
+    expect(user).to.be.deep.equalInAnyOrder(randomDatabaseUser);
+    expect(user.address).to.not.be.empty;
+  });
+
+  it('should return the same user list from DB', async () => {
+    const token = sign({ email: loginUser.email }, jwtTokenSecret, { expiresIn: '1d' });
+    const query = await userListQuery(url, token, databaseUsers.length);
+    const users = query.data.data.data.users;
+
+    expect(users).to.be.deep.equalInAnyOrder(databaseUsers);
   });
 });

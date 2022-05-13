@@ -3,6 +3,7 @@ import { User } from '../entity/User';
 import { AppDataSource } from '../data-source';
 import { errorsMessages, InputError } from '../error';
 import { isPasswordValid, generateHash, verifyToken } from '../utils';
+import { Request } from 'express';
 
 const resolveCreateUser: FieldResolver<'Mutation', 'createUser'> = async (_parent, args, context) => {
   const token = context.headers.authorization;
@@ -60,13 +61,30 @@ export const UserInput = inputObjectType({
   },
 });
 
+export const AddressResponse = objectType({
+  name: 'AddressResponse',
+  definition(t) {
+    t.nonNull.int('id');
+    t.nonNull.int('postalCode');
+    t.nonNull.string('street');
+    t.nonNull.int('streetNumber');
+    t.string('complement');
+    t.nonNull.string('neighborHood');
+    t.nonNull.string('city');
+    t.nonNull.string('state');
+  },
+});
+
 export const UserResponse = objectType({
-  name: 'UserResponse',
+  name: 'Address',
   definition(t) {
     t.nonNull.int('id');
     t.nonNull.string('name');
     t.nonNull.string('email');
     t.nonNull.string('birthDate');
+    t.nonNull.list.field('address', {
+      type: AddressResponse,
+    });
   },
 });
 
@@ -75,7 +93,11 @@ const resolveQueryUser: FieldResolver<'Query', 'user'> = async (_parent, args, c
 
   verifyToken(token);
 
-  const user = await AppDataSource.manager.findOneBy(User, { id: args.id });
+  const user: User = await AppDataSource.manager.findOne(User, {
+    relations: ['address'],
+    where: { id: args.id },
+    select: ['id', 'name', 'birthDate', 'email', 'address'],
+  });
 
   if (!user) {
     throw new InputError(errorsMessages.userDoesntExist);
@@ -109,11 +131,12 @@ const resolveQueryUserList: FieldResolver<'Query', 'data'> = async (_parent, arg
 
   const currentPage = skip !== 0 ? Math.ceil(skip / pageLimit) : 1;
 
-  const users = await AppDataSource.createQueryBuilder(User, 'users')
-    .take(pageLimit)
-    .skip(skip)
-    .orderBy('name')
-    .getMany();
+  const users = await AppDataSource.manager.find(User, {
+    order: { name: 'ASC' },
+    relations: { address: true },
+    take: pageLimit,
+    skip,
+  });
 
   const lastUserPosition = skip + pageLimit;
   const initialUserPosition = skip ?? 0;

@@ -83,6 +83,16 @@ export const userQuery = async (url: string, id: number, token: string) => {
           name
           email
           birthDate
+          address {
+            id
+            postalCode
+            street
+            streetNumber
+            complement
+            neighborHood
+            city
+            state
+          }
         }
       }
       `,
@@ -107,6 +117,16 @@ export const userListQuery = async (url: string, token: string, quantity?: numbe
             name
             email
             birthDate
+            address {
+              id
+              postalCode
+              street
+              streetNumber
+              complement
+              neighborHood
+              city
+              state
+            }
           }
           pagination {
             hasNextPage
