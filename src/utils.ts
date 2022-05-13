@@ -50,7 +50,7 @@ export const dateFormatter = (date: Date) => {
   return `${day}-${month}-${year}`;
 };
 
-export const addUsersToDb = async (quantity: number): Promise<User[]> => {
+export const addUsersToDb = (quantity: number): Promise<User[]> => {
   const seedPassword = '123456a';
 
   const users = [];
@@ -66,14 +66,8 @@ export const addUsersToDb = async (quantity: number): Promise<User[]> => {
     user.password = hashedPassword;
     user.salt = salt;
 
-    try {
-      users.push(user);
-    } catch (error) {
-      console.log(error);
-    }
+    users.push(user);
   }
 
-  await AppDataSource.manager.save(users);
-
-  return users;
+  return AppDataSource.manager.save(users);
 };

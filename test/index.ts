@@ -301,9 +301,9 @@ describe('user query', () => {
 
 describe('user list query', () => {
   let databaseUsers: User[];
-
+  let totalUsersQuantity: number;
   let users: User[];
-  let totalUsers: number;
+
   before(async () => {
     const repository = AppDataSource.getRepository(User);
     users = await addUsersToDb(50);
@@ -314,7 +314,7 @@ describe('user list query', () => {
       .orderBy('name')
       .getMany();
 
-    totalUsers = databaseUsers.length;
+    totalUsersQuantity = databaseUsers.length;
   });
 
   after(async () => {
@@ -356,22 +356,50 @@ describe('user list query', () => {
     const query = await userListQuery(url, token);
 
     expect(defaultQuantity).to.be.eq(query.data.data.data.users.length);
+    expect(query.data.data.data.pagination.totalQuantity).to.be.eq(totalUsersQuantity);
   });
 
-  it('should returns false for previousPage and true for nextPage when current page is 0', async () => {
+  it('should returns false for previousPage and true for nextPage when current page is 1', async () => {
     const token = sign({ email: loginUser.email }, jwtTokenSecret, { expiresIn: '1d' });
     const query = await userListQuery(url, token, 10, 0);
 
+    expect(query.data.data.data.pagination.currentPage).to.be.eq(1);
     expect(query.data.data.data.pagination.hasPreviousPage).to.be.false;
     expect(query.data.data.data.pagination.hasNextPage).to.be.true;
   });
 
   it('should return false to nextPage when reaches at last page', async () => {
     const pageLimit = 10;
-    const initialUserFromLastPage = totalUsers - pageLimit;
+    const totalPages = Math.ceil(totalUsersQuantity / pageLimit);
+    const initialUserFromLastPage = totalUsersQuantity - pageLimit;
     const token = sign({ email: loginUser.email }, jwtTokenSecret, { expiresIn: '1d' });
     const query = await userListQuery(url, token, pageLimit, initialUserFromLastPage);
 
     expect(query.data.data.data.pagination.hasNextPage).to.be.false;
+    expect(query.data.data.data.pagination.totalQuantity).to.be.eq(totalUsersQuantity);
+    expect(query.data.data.data.pagination.totalPages).to.be.eq(totalPages);
+  });
+
+  it('should return true in nextPage and previousPage fields (neither initial page nor final)', async () => {
+    const page = 2;
+    const pageLimit = Math.ceil(totalUsersQuantity / 5);
+    const skip = pageLimit * page;
+    const token = sign({ email: loginUser.email }, jwtTokenSecret, { expiresIn: '1d' });
+    const query = await userListQuery(url, token, pageLimit, skip);
+
+    expect(query.data.data.data.pagination.hasNextPage).to.be.true;
+    expect(query.data.data.data.pagination.hasPreviousPage).to.be.true;
+    expect(query.data.data.data.pagination.totalQuantity).to.be.eq(totalUsersQuantity);
+    expect(query.data.data.data.pagination.currentPage).to.be.eq(page);
+  });
+
+  it('should return all users in one page, with correct pagination (false for both)', async () => {
+    const pageLimit = totalUsersQuantity;
+    const token = sign({ email: loginUser.email }, jwtTokenSecret, { expiresIn: '1d' });
+    const query = await userListQuery(url, token, pageLimit);
+
+    expect(query.data.data.data.pagination.hasNextPage).to.be.false;
+    expect(query.data.data.data.pagination.hasPreviousPage).to.be.false;
+    expect(query.data.data.data.pagination.totalQuantity).to.be.eq(totalUsersQuantity);
   });
 });

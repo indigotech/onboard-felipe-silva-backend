@@ -112,6 +112,8 @@ export const userListQuery = async (url: string, token: string, quantity?: numbe
             hasNextPage
             hasPreviousPage
             totalQuantity
+            currentPage
+            totalPages
           }
         }
       }
