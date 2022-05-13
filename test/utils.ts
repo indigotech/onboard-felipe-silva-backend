@@ -91,7 +91,7 @@ export const userQuery = async (url: string, id: number, token: string) => {
   });
 };
 
-export const userListQuery = async (url: string, token: string, quantity?: number) => {
+export const userListQuery = async (url: string, token: string, quantity?: number, offset?: number) => {
   return axios({
     url,
     method: 'post',
@@ -100,16 +100,23 @@ export const userListQuery = async (url: string, token: string, quantity?: numbe
     },
     data: {
       query: `
-      query Query($quantity: Int) {
-        users(quantity: $quantity) {
-          id
-          name
-          email
-          birthDate
+      query Users($quantity: Int, $offset: Int) {
+        data(quantity: $quantity, offset: $offset) {
+          users {
+            id
+            name
+            email
+            birthDate
+          }
+          pagination {
+            hasNextPage
+            hasPreviousPage
+            totalQuantity
+          }
         }
       }
       `,
-      variables: { quantity },
+      variables: { quantity, offset },
     },
   });
 };

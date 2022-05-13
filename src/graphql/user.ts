@@ -104,7 +104,6 @@ const resolveQueryUserList: FieldResolver<'Query', 'data'> = async (_parent, arg
   const pageLimit = args.quantity ?? 10;
   const skip = args.offset ?? 0;
   const totalUsersQuantity = await AppDataSource.manager.count(User);
-  // const users = await AppDataSource.manager.find(User, { skip, take: pageLimit });
 
   const users = await AppDataSource.createQueryBuilder(User, 'users')
     .take(pageLimit)

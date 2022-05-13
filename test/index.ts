@@ -329,6 +329,6 @@ describe('user list query', () => {
     const token = sign({ email: loginUser.email }, jwtTokenSecret, { expiresIn: '1d' });
     const query = await userListQuery(url, token);
 
-    expect(defaultQuantity).to.be.eq(query.data.data.users.length);
+    expect(defaultQuantity).to.be.eq(query.data.data.data.users.length);
   });
 });
